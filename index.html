@@ -7,6 +7,19 @@
   <meta name="description" content="Jingkai LAN (蓝靖凯) – M.Sc. in Bioinformatics and Computational Biology exploring life sciences with deep learning and machine learning." />
   <meta name="keywords" content="Jingkai LAN, Bioinformatics, Computational Biology, Deep Learning, Machine Learning, University of Bern, Shihezi University" />
   <meta name="author" content="Jingkai LAN" />
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha512-VjPbsF9einJAdTYf+V4e1oVl3B1etWYX17pHwSBFkzFn1cdLyZX+KCsb27DMuqLk+1YIJvGICB8GaeGTzT1WQw=="
+    crossorigin=""
+  />
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+
   <style>
     body {
       font-family: "Helvetica Neue", Arial, sans-serif;
@@ -165,6 +178,15 @@
       opacity: 1;
     }
 
+    /* --------- 地图 --------- */
+    #map {
+      width: 100%;
+      height: 500px;
+      margin-top: 40px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
     /* --------- 响应式 --------- */
     @media (max-width: 640px) {
       .container {
@@ -182,6 +204,9 @@
       }
       .collab-logos img {
         height: 60px; /* 在小屏幕上稍微再缩小 */
+      }
+      #map {
+        height: 400px;
       }
     }
   </style>
@@ -248,5 +273,106 @@
       <img src="Figs/logos/Shihezi_University_logo.png" alt="Shihezi University logo" />
     </a>
   </section>
+
+  <!-- ===== 世界访客地图 ===== -->
+  <section style="max-width: 900px; margin: 0 auto; padding: 0 20px 60px;">
+    <h2>Visitor Map</h2>
+    <p style="font-size:0.9rem;color:#555;">Each dot marks a unique visit (based on IP &amp; coarse geo-location). Data are stored anonymously in Firebase Realtime Database.</p>
+    <div id="map"></div>
+  </section>
+
+  <!-- Leaflet JS -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha512-QVlY58+4ahSP0QqOOi2dqhN6xRvx+P4N7Qwm3rqQrs5lpxfMsToXUbBQ6pOyTdy+4i/7cn8dFjUW2Bt0agyXfg=="
+    crossorigin=""
+  ></script>
+
+  <script>
+    // ------------------ Firebase INITIALISATION ------------------
+    // 1. Replace the placeholder values with your own Firebase project configuration.
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // ------------------ Leaflet MAP ------------------
+    const map = L.map('map').setView([20, 0], 2); // Center on world
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Simple icon style
+    const visitorIcon = L.circleMarker([0,0], {
+      radius: 6,
+      fillColor: '#2563eb',
+      color: '#2563eb',
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 0.8
+    });
+
+    // ------------------ Helper Functions ------------------
+    function addMarker(lat, lon) {
+      L.circleMarker([lat, lon], {
+        radius: 5,
+        fillColor: '#2563eb',
+        color: '#1d4ed8',
+        weight: 1,
+        opacity: 0.9,
+        fillOpacity: 0.8
+      }).addTo(map);
+    }
+
+    function writeVisit(ip, lat, lon, city, country) {
+      const ts = Date.now();
+      db.ref('visitors').push({ ip, lat, lon, city, country, ts });
+    }
+
+    function alreadyLogged(ip, callback) {
+      db.ref('visitors').orderByChild('ip').equalTo(ip).once('value', snap => {
+        callback(snap.exists());
+      });
+    }
+
+    function loadMarkers() {
+      db.ref('visitors').once('value', snapshot => {
+        snapshot.forEach(child => {
+          const { lat, lon } = child.val();
+          if (lat && lon) addMarker(lat, lon);
+        });
+      });
+    }
+
+    // ------------------ Main: on page load ------------------
+    fetch('https://ipapi.co/json/')
+      .then(resp => resp.json())
+      .then(data => {
+        const ip = data.ip;
+        const lat = parseFloat(data.latitude);
+        const lon = parseFloat(data.longitude);
+        const city = data.city;
+        const country = data.country_name;
+
+        // Check if IP already stored to avoid duplicates
+        alreadyLogged(ip, exists => {
+          if (!exists) {
+            writeVisit(ip, lat, lon, city, country);
+          }
+        });
+      })
+      .catch(err => console.error('IP lookup failed:', err))
+      .finally(loadMarkers);
+  </script>
 </body>
 </html>

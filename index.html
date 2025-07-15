@@ -148,10 +148,14 @@
       text-align: center;
     }
 
+    .collab-logos a {
+      display: inline-block;
+      margin: 0 25px;
+    }
+
     .collab-logos img {
       height: 80px; /* 统一高度，宽度自适应 */
       width: auto;
-      margin: 0 25px;
       vertical-align: middle;
       opacity: 0.9;
       transition: opacity 0.2s ease-in-out;
@@ -178,7 +182,6 @@
       }
       .collab-logos img {
         height: 60px; /* 在小屏幕上稍微再缩小 */
-        margin: 15px;
       }
     }
   </style>
@@ -222,7 +225,7 @@
           <a href="#" target="_blank">Using Deep Learning Methods to Predict Metal Sites in Metalloproteins</a>
         </h3>
         <p><em>M.Sc. Thesis, University of Bern</em></p>
-        <p><strong>Jingkai LAN</strong>, Thomas Lemmin, Giulia Peteani</p>
+        <p><strong>Jingkai LAN</strong>, Giulia Peteani, Thomas Lemmin</p>
         <p>
           Integrated metal-binding protein sequences and extracted binding-site data from two publicly available databases (MESPEUS and MbPA). Generated non-metal-binding protein sequences by mutating metal-binding sites of metalloproteins using AI-driven protein design and structural prediction tools (ProteinMPNN, ESM-Fold and CHAI 1). Annotated enzyme information with PDB enzyme classification and BRENDA. Developed and trained four deep-learning models to classify metalloproteins (BERT + Adapter), predict enzymatic activity (embedding + ML), and identify metal-binding sites (PeSTo).
         </p>
@@ -237,8 +240,11 @@
 
   <!-- ===== 合作 Logo  ===== -->
   <section class="collab-logos">
-    <img src="Figs/logos/bern_logo.png" alt="University of Bern" />
-    <img src="Figs/logos/Shihezi_University_logo.png" alt="Shihezi University" />
+    <a href="https://www.unibe.ch/" target="_blank" rel="noopener noreferrer">
+      <img src="Figs/logos/bern_logo.png" alt="University of Bern logo" />
+    </a>
+    <a href="https://www.shzu.edu.cn/" target="_blank" rel="noopener noreferrer">
+      <img src="Figs/logos/shzu_logo.png" alt="Shihezi University logo" />
   </section>
 </body>
 </html>

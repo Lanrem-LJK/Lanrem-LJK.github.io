@@ -140,6 +140,27 @@
       background-color: #1d4ed8;
     }
 
+    /* --------- 合作 LOGO 部分 --------- */
+    .collab-logos {
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 20px 0;
+      text-align: center;
+    }
+
+    .collab-logos img {
+      height: 80px; /* 统一高度，宽度自适应 */
+      width: auto;
+      margin: 0 25px;
+      vertical-align: middle;
+      opacity: 0.9;
+      transition: opacity 0.2s ease-in-out;
+    }
+
+    .collab-logos img:hover {
+      opacity: 1;
+    }
+
     /* --------- 响应式 --------- */
     @media (max-width: 640px) {
       .container {
@@ -154,6 +175,10 @@
       }
       .project-gif img {
         width: 100%;
+      }
+      .collab-logos img {
+        height: 60px; /* 在小屏幕上稍微再缩小 */
+        margin: 15px;
       }
     }
   </style>
@@ -197,15 +222,23 @@
           <a href="#" target="_blank">Using Deep Learning Methods to Predict Metal Sites in Metalloproteins</a>
         </h3>
         <p><em>M.Sc. Thesis, University of Bern</em></p>
-        <p><em><strong>Jingkai LAN</strong>, Thomas Lemmin, Giulia Peteani</em></p>
+        <p><strong>Jingkai LAN</strong>, Thomas Lemmin, Giulia Peteani</p>
         <p>
-          Integrated metal‑binding protein sequences and extracted binding‑site data from two publicly available databases (MESPEUS and MbPA). Generated non‑metal‑binding protein sequences by mutating metal‑binding sites of metalloproteins using AI‑driven protein design and structural prediction tools (ProteinMPNN, ESM‑Fold and CHAI 1). Annotated enzyme information with PDB enzyme classification and BRENDA. Developed and trained four deep‑learning models to classify metalloproteins (BERT + Adapter), predict enzymatic activity (embedding + ML), and identify metal‑binding sites (PeSTo).
+          Integrated metal-binding protein sequences and extracted binding-site data from two publicly available databases (MESPEUS and MbPA). Generated non-metal-binding protein sequences by mutating metal-binding sites of metalloproteins using AI-driven protein design and structural prediction tools (ProteinMPNN, ESM-Fold and CHAI 1). Annotated enzyme information with PDB enzyme classification and BRENDA. Developed and trained four deep-learning models to classify metalloproteins (BERT + Adapter), predict enzymatic activity (embedding + ML), and identify metal-binding sites (PeSTo).
         </p>
         <div class="project-buttons">
           <a class="btn" href="Document/Slides/Metal_binding_site_prediction_of_Metalloprotein.pdf" target="_blank">Slides</a>
         </div>
       </div>
     </div>
+  </section>
+
+  <hr style="border: 0; height: 1px; background: #e5e7eb; margin: 0;" />
+
+  <!-- ===== 合作 Logo  ===== -->
+  <section class="collab-logos">
+    <img src="Figs/logos/bern_logo.png" alt="University of Bern" />
+    <img src="Figs/logos/Shihezi_University_logo.png" alt="Shihezi University" />
   </section>
 </body>
 </html>

@@ -95,7 +95,7 @@
   <!-- ===== 世界访客地图 ===== -->
   <section style="max-width:900px;margin:0 auto;padding:0 20px 60px;">
     <h2>Visitor Map</h2>
-    <p style="font-size:.9rem;color:#555;">Each dot marks a unique visit (based on IP &amp; coarse geo‑location). Data are stored anonymously in Firebase Realtime Database. If the DB连接失败，仍会显示本次访问的圆点。</p>
+    <p style="font-size:.9rem;color:#555;">Each dot marks a unique visit (based on IP &amp; coarse geo‑location). Data are stored anonymously in Firebase Realtime Database. </p>
     <div id="map"></div>
   </section>
 
@@ -103,21 +103,23 @@
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    /* ---------------- Firebase INITIALISATION ---------------- */
-    // ▶ 将下列占位符替换为你自己项目的配置
+    /* ---------------- Firebase INITIALISATION (真实配置) ---------------- */
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.asia-southeast1.firebasedatabase.app", // 推荐指定 region，绕开被墙节点
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "SENDER_ID",
-      appId: "APP_ID"
+      apiKey: "AIzaSyDNEtRx0IQpgQ7MUq_5UvvFY9Np7BW0eeI",
+      authDomain: "lanrem-ljk.firebaseapp.com",
+      databaseURL: "https://lanrem-ljk-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "lanrem-ljk",
+      storageBucket: "lanrem-ljk.appspot.com",
+      messagingSenderId: "182202252009",
+      appId: "1:182202252009:web:06bfbf04bf7a36c5040e78",
+      measurementId: "G-FSZ9EBDE30"
     };
 
     let db = null;
     try {
-      firebase.initializeApp(firebaseConfig);
+      const app = firebase.initializeApp(firebaseConfig);
+      // 如果 Analytics SDK 加载成功则初始化
+      if (firebase.analytics) firebase.analytics();
       db = firebase.database();
     } catch (e) {
       console.warn('[Firebase] init failed:', e);

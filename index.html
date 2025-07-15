@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Jingkai LAN | Bioinformatics</title>
+  <title>Jingkai LAN</title>
   <meta name="description" content="Jingkai LAN – M.Sc. student in Bioinformatics and Computational Biology exploring life sciences with deep learning and machine learning." />
   <meta name="keywords" content="Jingkai LAN, Bioinformatics, Computational Biology, Deep Learning, Machine Learning, University of Bern, Shihezi University" />
   <meta name="author" content="Jingkai LAN" />
@@ -16,6 +16,7 @@
       color: #333;
     }
 
+    /* --------- 通用布局 --------- */
     .container {
       max-width: 900px;
       margin: 0 auto;
@@ -25,6 +26,29 @@
       align-items: flex-start;
     }
 
+    h1 {
+      margin: 0 0 10px;
+      font-size: 2.2rem;
+      color: #1e3a8a;
+    }
+
+    h2 {
+      margin: 25px 0 10px;
+      font-size: 1.3rem;
+      color: #374151;
+    }
+
+    p {
+      line-height: 1.6;
+      font-size: 1rem;
+    }
+
+    ul {
+      list-style-type: disc;
+      padding-left: 20px;
+    }
+
+    /* --------- 个人信息部分 --------- */
     .photo {
       flex: 0 0 220px;
     }
@@ -40,28 +64,7 @@
       flex: 1;
     }
 
-    h1 {
-      margin: 0 0 10px;
-      font-size: 2.2rem;
-      color: #1e3a8a;
-    }
-
-    h2 {
-      margin: 25px 0 10px;
-      font-size: 1.3rem;
-      color: #374151;
-    }
-
-    ul {
-      list-style-type: disc;
-      padding-left: 20px;
-    }
-
-    p {
-      line-height: 1.6;
-      font-size: 1rem;
-    }
-
+    /* --------- 链接样式 --------- */
     .links {
       margin-top: 20px;
     }
@@ -79,15 +82,90 @@
       color: #1d4ed8;
       text-decoration: underline;
     }
+
+    /* --------- 项目部分 --------- */
+    .project-section {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .project {
+      display: flex;
+      gap: 30px;
+      align-items: flex-start;
+      margin-top: 30px;
+    }
+
+    .project-gif img {
+      width: 260px;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .project-content h3 {
+      margin: 0 0 10px;
+      font-size: 1.25rem;
+      color: #1e3a8a;
+    }
+
+    .project-content h3 a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .project-content h3 a:hover {
+      text-decoration: underline;
+    }
+
+    /* ---- Project button (Slides) ---- */
+    .project-buttons {
+      margin-top: 12px;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 6px 14px;
+      background-color: #2563eb;
+      color: #fff;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background-color 0.2s ease-in-out;
+    }
+
+    .btn:hover {
+      background-color: #1d4ed8;
+    }
+
+    /* --------- 响应式 --------- */
+    @media (max-width: 640px) {
+      .container {
+        flex-direction: column;
+        align-items: center;
+      }
+      .photo {
+        margin-bottom: 20px;
+      }
+      .project {
+        flex-direction: column;
+      }
+      .project-gif img {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
+  <!-- ===== 个人信息 ===== -->
   <div class="container">
     <div class="photo">
       <img src="Figs/Photo.jpg" alt="Jingkai LAN" />
     </div>
     <div class="content">
-      <h1>Hello, I'm Jingkai LAN!</h1>
+      <h1>Jingkai LAN</h1>
       <p>I have a strong interest in how <strong>deep learning</strong> and <strong>machine learning</strong> can be used to explore life sciences.</p>
 
       <h2>Education</h2>
@@ -100,8 +178,35 @@
         <a href="Document/Lan_Jingkai-CV.pdf" target="_blank">CV</a>
         <a href="https://github.com/Lanrem-LJK" target="_blank">GitHub</a>
         <a href="https://www.kaggle.com/bimmortal" target="_blank">Kaggle</a>
+        <a href="mailto:jingkai.bio@gmail.com">Email</a>
       </div>
     </div>
   </div>
+
+  <hr style="border: 0; height: 1px; background: #e5e7eb; margin: 0;" />
+
+  <!-- ===== 项目展示 ===== -->
+  <section class="project-section">
+    <h2>Projects</h2>
+    <div class="project">
+      <div class="project-gif">
+        <img src="Figs/gif/Metal_Protein.gif" alt="Metal Protein Prediction" />
+      </div>
+      <div class="project-content">
+        <h3>
+          <a href="#" target="_blank">Using Deep Learning Methods to Predict Metal Sites in Metalloproteins</a>
+        </h3>
+        <p><em>M.Sc. Thesis, University of Bern</em></p>
+        <p>
+          Integrated metal‑binding protein sequences and extracted binding‑site data from two publicly available databases (MESPEUS and MbPA).
+          Generated non‑metal‑binding protein sequences by mutating metal‑binding sites of metalloproteins using AI‑driven protein design and structural prediction tools (ProteinMPNN, ESM‑Fold and CHAI 1).
+          Annotated enzyme information with PDB enzyme classification and BRENDA. Developed and trained four deep‑learning models to classify metalloproteins (BERT + Adapter), predict enzymatic activity (embedding + ML), and identify metal‑binding sites (PeSTo).
+        </p>
+        <div class="project-buttons">
+          <a class="btn" href="Document/Slides/Metal_binding_site_prediction_of_Metalloprotein.pdf" target="_blank">Slides</a>
+        </div>
+      </div>
+    </div>
+  </section>
 </body>
 </html>

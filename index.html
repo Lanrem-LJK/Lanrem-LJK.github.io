@@ -41,9 +41,9 @@
     .collab-logos a { display: inline-block; margin: 0 25px; }
     .collab-logos img { height: 80px; width: auto; opacity: .9; transition: opacity .2s; }
     .collab-logos img:hover { opacity: 1; }
-    .carousel {position: relative;width: 260px;height: 260px;overflow: hidden;border-radius: 8px;box-shadow: 0 4px 8px rgba(0,0,0,.08);}
-    .carousel img {position: absolute;inset: 0;width: 100%;height: 100%;object-fit: contain;opacity: 0;transition: opacity .6s ease-in-out;}
-    .carousel img.active {opacity: 1;}
+    .carousel{position:relative;width:260px;overflow:hidden;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,.08);} 
+    .carousel img{width:100%;display:none;transition:opacity .6s ease-in-out;} 
+    .carousel img.active{display:block;} 
     #map { width: 100%; height: 500px; margin-top: 40px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,.1); }
     @media (max-width: 640px) { .container{flex-direction:column;align-items:center;} .photo{margin-bottom:20px;} .project{flex-direction:column;} .project-gif img{width:100%;} .collab-logos img{height:60px;} #map{height:400px;} }
 
@@ -135,7 +135,7 @@
         index = (index + 1) % slides.length;
         // 显示下一张
         slides[index].classList.add('active');
-      }, 2000);   // 4 秒 / 张，可按需调整
+      }, 4000);
     });
 
     /* ---------------- Firebase INITIALISATION (真实配置) ---------------- */

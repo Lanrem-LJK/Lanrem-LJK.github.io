@@ -41,8 +41,12 @@
     .collab-logos a { display: inline-block; margin: 0 25px; }
     .collab-logos img { height: 80px; width: auto; opacity: .9; transition: opacity .2s; }
     .collab-logos img:hover { opacity: 1; }
+    .carousel {position: relative;width: 260px;height: 260px;overflow: hidden;border-radius: 8px;box-shadow: 0 4px 8px rgba(0,0,0,.08);}
+    .carousel img {position: absolute;inset: 0;width: 100%;height: 100%;object-fit: contain;opacity: 0;transition: opacity .6s ease-in-out;}
+    .carousel img.active {opacity: 1;}
     #map { width: 100%; height: 500px; margin-top: 40px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,.1); }
     @media (max-width: 640px) { .container{flex-direction:column;align-items:center;} .photo{margin-bottom:20px;} .project{flex-direction:column;} .project-gif img{width:100%;} .collab-logos img{height:60px;} #map{height:400px;} }
+
   </style>
 </head>
 <body>
@@ -73,6 +77,7 @@
   <!-- ===== 项目展示 ===== -->
   <section class="project-section">
     <h2>Projects</h2>
+
     <div class="project">
       <div class="project-gif"><img src="Figs/gif/Metal_Protein.gif" alt="Metal Protein Prediction" /></div>
       <div class="project-content">
@@ -81,6 +86,20 @@
         <p><strong>Jingkai LAN</strong>, Giulia Peteani, Thomas Lemmin</p>
         <p>Integrated metal‑binding protein sequences and extracted binding‑site data from two publicly available databases (MESPEUS and MbPA). Generated non‑metal‑binding protein sequences by mutating metal‑binding sites using AI‑driven design tools (ProteinMPNN, ESM‑Fold, CHAI 1). Developed deep‑learning models to classify metalloproteins, predict enzymatic activity, and identify metal‑binding sites.</p>
         <div class="project-buttons"><a class="btn" href="Document/Slides/Metal_binding_site_prediction_of_Metalloprotein.pdf" target="_blank">Slides</a></div>
+      </div>
+    </div>
+
+    <div class="project">
+      <div class="project-gif carousel" data-carousel-id="btc">
+        <img src="Figs/Bitcoin_01.png" alt="Bitcoin chart 1" class="active" />
+        <img src="Figs/Bitcoin_02.png" alt="Bitcoin chart 2" />
+      </div>
+
+      <div class="project-content">
+        <h3><a href="#" target="_blank">Using NLP Method to Forecast Bitcoin Volatility</a></h3>
+        <p><em>Personal project</em></p>
+        <p><strong>Jingkai LAN</strong></p>
+        <p>Leveraging five years of 3-minute BTC-USDT perpetual-futures closing prices, the raw time-series data are pre-processed, standardised and rendered as natural-language sequences consumable by NLP models. A binary classifier predicts whether the closing price will move sharply (│Δ│ &gt; 0.5 %) within the next 30 minutes. Five-fold cross-validation with an Adapter-augmented BERT backbone achieves an accuracy of 69.9 %, recall 70.1 %, and precision 94.5 %.</p>
       </div>
     </div>
   </section>
@@ -104,6 +123,21 @@
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
+
+    /* ===== 简易轮播逻辑 ===== */
+    document.querySelectorAll('.carousel').forEach(carousel => {
+      const slides = carousel.querySelectorAll('img');
+      let index = 0;
+      setInterval(() => {
+        // 隐藏当前
+        slides[index].classList.remove('active');
+        // 指向下一张
+        index = (index + 1) % slides.length;
+        // 显示下一张
+        slides[index].classList.add('active');
+      }, 2000);   // 4 秒 / 张，可按需调整
+    });
+
     /* ---------------- Firebase INITIALISATION (真实配置) ---------------- */
     const firebaseConfig = {
       apiKey: "AIzaSyDNEtRx0IQpgQ7MUq_5UvvFY9Np7BW0eeI",

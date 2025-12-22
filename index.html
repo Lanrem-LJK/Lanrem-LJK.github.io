@@ -32,7 +32,7 @@
     .project { display: flex; gap: 30px; align-items: flex-start; margin-top: 30px; }
     .project-gif img { width: 260px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,.08); }
     .project-content h3 { margin: 0 0 10px; font-size: 1.25rem; color: #1e3a8a; }
-    .project-content h3 a { color: inherit; text-decoration: none; }
+    .project-content h3 a { color: inherit;text-decoration: none;pointer-events: none;cursor: default; }
     .project-content h3 a:hover { text-decoration: underline; }
     .project-buttons { margin-top: 12px; }
     .btn { display: inline-block; padding: 6px 14px; background: #2563eb; color: #fff; border-radius: 4px; font-size: .9rem; font-weight: 600; text-decoration: none; transition: background .2s; }
@@ -80,11 +80,14 @@
     <div class="project">
       <div class="project-gif"><img src="Figs/gif/Metal_Protein.gif" alt="Metal Protein Prediction" /></div>
       <div class="project-content">
-        <h3><a href="#" target="_blank">Using Deep Learning Methods to Predict Metal Sites in Metalloproteins</a></h3>
+        <h3><a href="#" target="_blank">Advancing metal-binding protein predictions with deep learning</a></h3>
         <p><em>M.Sc. Thesis, University of Bern</em></p>
         <p><strong>Jingkai LAN</strong>, Giulia Peteani, Thomas Lemmin</p>
-        <p>Integrated metal‑binding protein sequences and extracted binding‑site data from two publicly available databases (MESPEUS and MbPA). Generated non‑metal‑binding protein sequences by mutating metal‑binding sites using AI‑driven design tools (ProteinMPNN, ESM‑Fold, CHAI 1). Developed deep‑learning models to classify metalloproteins, predict enzymatic activity, and identify metal‑binding sites.</p>
-        <div class="project-buttons"><a class="btn" href="Document/Slides/Metal_binding_site_prediction_of_Metalloprotein.pdf" target="_blank">Slides</a></div>
+        <p>Metalloprotein annotations in major databases such as PDB and UniProt remain incomplete due to the high cost of experimental validation and manual curation. To address this, we developed sequence-only deep learning and machine learning models to predict metal-binding proteins and infer their enzymatic capability, and constructed a specialized metalloprotein database by integrating curated resources with in silico mutagenesis and rigorous quality control using structure prediction tools. Our models require only protein sequence information to operate, while achieving performance comparable to state-of-the-art approaches that rely on structural features or extensive feature engineering.</p>
+        <div class="project-buttons">
+          <a class="btn" href="Document/Slides/Metal_binding_site_prediction_of_Metalloprotein.pdf" target="_blank">Slides</a>
+          <a class="btn" href="Document/Paper/Jingkai_thesis.pdf" target="_blank">Report</a>
+        </div>
       </div>
     </div>
 

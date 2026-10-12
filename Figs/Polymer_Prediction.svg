@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="520" viewBox="0 0 520 520" role="img" aria-labelledby="title desc">
+<title id="title">Polymer property prediction</title><desc id="desc">A repeating polymer chain represented by SMILES is used to predict Tg, FFV, Tc, density, and Rg.</desc>
+<rect width="520" height="520" rx="16" fill="#fff"/>
+<g font-family="Helvetica Neue, Arial, sans-serif">
+<text x="260" y="55" text-anchor="middle" font-size="16" font-weight="600" letter-spacing="2" fill="#64748b">POLYMER PREDICTION</text>
+<g fill="none" stroke="#2563eb" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M63 165 L125 125 L187 165 L249 125 L311 165 L373 125 L435 165"/>
+<path d="M91 109 H78 V192 H91 M408 109 H421 V192 H408" stroke="#94a3b8" stroke-width="3"/>
+</g>
+<g fill="#fff" stroke="#2563eb" stroke-width="4"><circle cx="125" cy="125" r="9"/><circle cx="187" cy="165" r="9"/><circle cx="249" cy="125" r="9"/><circle cx="311" cy="165" r="9"/><circle cx="373" cy="125" r="9"/></g>
+<text x="435" y="207" fill="#64748b" font-size="18" font-style="italic">n</text>
+<text x="260" y="228" text-anchor="middle" font-size="20" font-weight="600" fill="#1e3a8a">SMILES → Molecular features</text>
+<path d="M260 248 V278 M252 270 L260 278 L268 270" stroke="#94a3b8" stroke-width="3" fill="none"/>
+<rect x="76" y="295" width="368" height="58" rx="9" fill="#eff6ff" stroke="#dbeafe"/>
+<text x="260" y="331" text-anchor="middle" fill="#1e3a8a" font-size="21" font-weight="600">XGBoost · LightGBM</text>
+<path d="M260 371 V393 M252 385 L260 393 L268 385" stroke="#94a3b8" stroke-width="3" fill="none"/>
+<g fill="#f8fafc" stroke="#e2e8f0"><rect x="31" y="412" width="65" height="43" rx="7"/><rect x="110" y="412" width="72" height="43" rx="7"/><rect x="196" y="412" width="65" height="43" rx="7"/><rect x="275" y="412" width="124" height="43" rx="7"/><rect x="413" y="412" width="76" height="43" rx="7"/></g>
+<g fill="#334155" font-size="18" text-anchor="middle" font-weight="600"><text x="63" y="439">Tg</text><text x="146" y="439">FFV</text><text x="228" y="439">Tc</text><text x="337" y="439">Density</text><text x="451" y="439">Rg</text></g>
+</g></svg>

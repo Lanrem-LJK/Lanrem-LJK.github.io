@@ -1,0 +1,1107 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Jingkai LAN's NeurIPS Open Polymer Prediction 2025 project: SMILES, RDKit, XGBoost, LightGBM, and a top-third leaderboard finish.">
+<title>Polymer Prediction Code Sample | Jingkai LAN</title><style>
+  :root {
+    color-scheme: dark;
+    --paper: #0d1117;
+    --ink: #e6edf3;
+    --muted: #8b949e;
+    --rule: #30363d;
+    --soft: #161b22;
+    --editor: #090b0f;
+    --editor-raised: #10141b;
+    --editor-rule: #252b35;
+    --code: #f8f8f2;
+    --comment: #7f8ea3;
+    --keyword: #ff79c6;
+    --string: #f1fa8c;
+    --number: #bd93f9;
+    --builtin: #8be9fd;
+    --definition: #50fa7b;
+    --constant: #ffb86c;
+    --operator: #ff79c6;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    overflow: hidden;
+    color: var(--ink);
+    background: var(--paper);
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font: inherit; }
+  .topbar {
+    height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 0 22px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--paper);
+  }
+  .identity { display: flex; align-items: baseline; gap: 13px; min-width: 0; }
+  .identity h1 { margin: 0; font-size: 16px; line-height: 1; letter-spacing: .01em; }
+  .identity p { margin: 0; color: var(--muted); font-size: 12px; }
+  .author { color: #c9d1d9; font-size: 12px; font-weight: 600; letter-spacing: .03em; white-space: nowrap; }
+  .workspace {
+    height: calc(100vh - 58px);
+    display: grid;
+    grid-template-columns: minmax(360px, 42%) minmax(0, 58%);
+  }
+  .readme-panel {
+    min-width: 0;
+    overflow-y: auto;
+    background: var(--paper);
+    border-right: 1px solid var(--rule);
+    scrollbar-color: #3b434f var(--paper);
+  }
+  .panel-label {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    border-bottom: 1px solid var(--rule);
+    background: rgba(13, 17, 23, .96);
+    color: #9da7b3;
+    font: 600 11px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    letter-spacing: .04em;
+    backdrop-filter: blur(8px);
+  }
+  .readme { max-width: 780px; margin: 0 auto; padding: 30px 34px 68px; font-size: 14px; line-height: 1.62; }
+  .readme h1 { margin: 0 0 20px; font-size: clamp(25px, 2.2vw, 34px); line-height: 1.18; letter-spacing: -.025em; }
+  .readme h2 { margin: 34px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--rule); font-size: 19px; line-height: 1.3; }
+  .readme h3 { margin: 25px 0 8px; font-size: 15px; line-height: 1.35; }
+  .readme p { margin: 0 0 14px; }
+  .readme ul, .readme ol { margin: 8px 0 16px 23px; padding: 0; }
+  .readme li { margin: 5px 0; padding-left: 2px; }
+  .readme code {
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: var(--soft);
+    color: var(--ink);
+    font: .9em/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  .table-scroll { overflow-x: auto; margin: 14px 0 20px; }
+  .readme table { width: 100%; border-collapse: collapse; font-size: 12.5px; line-height: 1.45; }
+  .readme th, .readme td { padding: 8px 9px; border: 1px solid var(--rule); text-align: left; vertical-align: top; }
+  .readme th { background: var(--soft); color: var(--ink); font-weight: 650; }
+  .readme-code {
+    margin: 12px 0 20px;
+    padding: 13px 15px;
+    overflow-x: auto;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: var(--editor);
+    color: var(--ink);
+    font: 11.5px/1.48 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  .readme-code code {
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+  }
+  .code-panel { min-width: 0; display: flex; flex-direction: column; overflow: hidden; background: var(--editor); }
+  .editor-bar {
+    min-height: 42px;
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid var(--editor-rule);
+    background: var(--editor-raised);
+  }
+  .tabs { display: flex; min-width: 0; overflow-x: auto; }
+  .tab {
+    position: relative;
+    flex: 0 0 auto;
+    padding: 0 18px;
+    border: 0;
+    border-right: 1px solid var(--editor-rule);
+    color: #aeb6c4;
+    background: transparent;
+    cursor: pointer;
+    font: 12px/42px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  .tab:hover { color: #fff; background: #171c25; }
+  .tab.is-active { color: #fff; background: var(--editor); }
+  .tab.is-active::after {
+    content: "";
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: 0;
+    height: 2px;
+    background: var(--builtin);
+  }
+  .copy-button {
+    align-self: center;
+    flex: 0 0 auto;
+    margin-right: 10px;
+    padding: 5px 10px;
+    border: 1px solid #39404d;
+    border-radius: 4px;
+    color: #cfd5df;
+    background: #171c25;
+    cursor: pointer;
+    font-size: 11px;
+  }
+  .copy-button:hover { color: #fff; border-color: #667085; }
+  .code-stage { position: relative; min-height: 0; flex: 1 1 auto; }
+  .code-pane { position: absolute; inset: 0; min-width: 0; overflow: auto; background: var(--editor); }
+  .code-pane[hidden] { display: none; }
+  .code-meta {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px 18px;
+    padding: 8px 20px;
+    border-bottom: 1px solid #1d222b;
+    color: #7f8998;
+    background: rgba(9, 11, 15, .96);
+    font: 10px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    backdrop-filter: blur(8px);
+  }
+  .source {
+    min-width: max-content;
+    margin: 0;
+    padding: 20px 28px 70px;
+    color: var(--code);
+    background: var(--editor);
+    tab-size: 4;
+    font: 13px/1.57 "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    white-space: pre;
+  }
+  .tok-comment { color: var(--comment); font-style: italic; }
+  .tok-keyword { color: var(--keyword); font-weight: 600; }
+  .tok-string { color: var(--string); }
+  .tok-number { color: var(--number); }
+  .tok-builtin { color: var(--builtin); }
+  .tok-definition { color: var(--definition); }
+  .tok-constant { color: var(--constant); }
+  .tok-operator { color: var(--operator); }
+  .readme-panel::-webkit-scrollbar, .code-pane::-webkit-scrollbar, .tabs::-webkit-scrollbar { width: 11px; height: 11px; }
+  .readme-panel::-webkit-scrollbar-thumb { background: #3b434f; border: 3px solid var(--paper); border-radius: 8px; }
+  .readme-panel::-webkit-scrollbar-corner { background: var(--paper); }
+  .code-pane::-webkit-scrollbar-thumb, .tabs::-webkit-scrollbar-thumb { background: #343b47; border: 3px solid var(--editor); border-radius: 8px; }
+  .code-pane::-webkit-scrollbar-corner { background: var(--editor); }
+  @media (max-width: 900px) {
+    body { overflow: auto; }
+    .topbar { position: sticky; top: 0; z-index: 20; }
+    .workspace { height: auto; display: block; }
+    .readme-panel { max-height: none; overflow: visible; border-right: 0; border-bottom: 1px solid var(--editor-rule); }
+    .code-panel { height: 78vh; min-height: 540px; }
+    .readme { padding-inline: 22px; }
+    .code-meta span:last-child { display: none; }
+  }
+  @media print {
+    body { overflow: visible; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .topbar { position: static; }
+    .workspace { height: auto; display: block; }
+    .readme-panel { overflow: visible; border: 0; }
+    .panel-label, .editor-bar, .code-meta { position: static; }
+    .code-panel { display: block; overflow: visible; }
+    .code-stage { display: block; }
+    .code-pane { position: static; display: block !important; overflow: visible; break-before: page; }
+    .source { min-width: 0; white-space: pre-wrap; font-size: 7pt; }
+    .copy-button { display: none; }
+  }
+
+  a { color: var(--builtin); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .project-nav { display: flex; gap: 16px; font-size: 12px; white-space: nowrap; }
+  .result { padding: 14px 16px; background: var(--soft); border: 1px solid var(--rule); border-radius: 6px; }
+  .notebook-note { color: var(--muted); }
+  @media (max-width: 900px) { .identity p { display: none; } }
+  @media (max-width: 560px) {
+    .topbar { padding: 10px 14px; height: auto; min-height: 68px; flex-wrap: wrap; gap: 8px; }
+    .identity h1 { font-size: 14px; }
+    .project-nav { font-size: 11px; gap: 12px; }
+    .tab { padding-inline: 12px; }
+  }
+</style></head><body>
+<header class="topbar"><div class="identity"><h1>Polymer Prediction Code Sample</h1><p>SMILES features and gradient-boosted regression</p></div>
+<nav class="project-nav" aria-label="Project navigation"><a href="../../../index.html">← Projects</a><a href="svm-base-polymer-prediction.ipynb" download>Notebook ↓</a></nav></header>
+<main class="workspace"><section class="readme-panel" aria-label="Project description"><div class="panel-label"><span>JINGKAI LAN</span><span>PROJECT OVERVIEW</span></div><article class="readme"><h1>Polymer Property Prediction</h1>
+<p>A Kaggle competition project for NeurIPS - Open Polymer Prediction 2025. I built a molecular machine learning workflow that maps polymer SMILES strings to five material properties, supporting faster computational screening of candidate polymers.</p>
+<p class="result"><strong>Competition result</strong><br>Ranked in the <strong>top third of the final leaderboard</strong>.</p>
+<h2>The prediction task</h2>
+<p>The competition provides chemical structures as SMILES strings and property labels averaged from molecular dynamics simulations. A submission predicts all five targets for every test polymer.</p>
+<div class="table-scroll"><table><thead><tr><th>Target</th><th>Property</th></tr></thead><tbody>
+<tr><td><code>Tg</code></td><td>Glass transition temperature</td></tr>
+<tr><td><code>FFV</code></td><td>Fractional free volume</td></tr>
+<tr><td><code>Tc</code></td><td>Thermal conductivity</td></tr>
+<tr><td><code>Density</code></td><td>Density</td></tr>
+<tr><td><code>Rg</code></td><td>Radius of gyration</td></tr>
+</tbody></table></div>
+<h2>1. Prepare and supplement the data</h2>
+<p>Canonicalize SMILES with RDKit so that equivalent molecular representations can be matched. Merge public datasets and competition supplements by target, average repeated external entries, and use overlapping molecules to estimate a mean offset relative to the original competition labels. Existing target values are preserved; missing labels are filled and new molecules are appended.</p>
+<p>Because labels are incomplete across the five properties, each regressor uses only rows with a finite value for its own target.</p>
+<h2>2. Build molecular features</h2>
+<p>Combine physicochemical descriptors with Morgan fingerprints and graph descriptors: diameter, average shortest-path length, and cycle count. The XGBoost feature set uses 1,024-bit Morgan fingerprints; the LightGBM feature set uses 2,048-bit Morgan and 2,048-bit atom-pair fingerprints.</p>
+<p>Features are computed with multiprocessing and cached in a joblib file so that repeated training runs can reuse them.</p>
+<h2>3. Train and ensemble regressors</h2>
+<p>The notebook contains alternative XGBoost and LightGBM workflows, with separate models for each property. It supports five-fold cross-validation for parameter selection, early stopping on validation MAE, and final ten-fold training. At inference, predictions are averaged across saved fold models.</p>
+<p>The saved execution uses LightGBM with manually selected parameters. The XGBoost training, evaluation, and submission cells are preserved inside triple-quoted strings in this version.</p>
+<h2>4. Evaluate and create a submission</h2>
+<p>The competition uses weighted mean absolute error (wMAE), balancing properties with different scales and label frequencies. The notebook computes a local validation approximation using training-label ranges and sample counts.</p>
+<p>The saved LightGBM run reports a mean ten-fold local wMAE of <strong>0.03790</strong>. This is a local cross-validation result; the competition outcome is the top-third leaderboard placement above.</p>
+<p>The submission cell reloads saved fold models, averages their predictions, and writes <code>submission.csv</code> with the following columns:</p>
+<pre class="readme-code"><code>id,Tg,FFV,Tc,Density,Rg</code></pre>
+<h2>Read the original code</h2>
+<p>The tabs on the right organize all <strong>13 code cells</strong> from the downloaded notebook into six workflow sections. The Python cell contents are preserved exactly, including the inactive alternatives. Use <strong>Copy code</strong> to copy the currently selected section.</p>
+<p class="notebook-note">The original notebook introduction proposes ChemBERTa and an SVM second-stage model. This file contains the data preparation and tree-model workflows described here.</p>
+<p><a href="svm-base-polymer-prediction.ipynb" download>Download the original notebook</a> · <a href="https://www.kaggle.com/competitions/neurips-open-polymer-prediction-2025" target="_blank" rel="noopener">View the competition</a></p>
+<h2>Environment and inputs</h2>
+<p>The notebook uses Kaggle input paths, public supplementary datasets, an offline RDKit wheel, and GPU-enabled model libraries. Its dependencies include NumPy, pandas, RDKit, NetworkX, scikit-learn, XGBoost, LightGBM, matplotlib, and joblib. Datasets and trained model files are supplied separately.</p>
+</article></section>
+<section class="code-panel" aria-label="Original notebook code"><div class="editor-bar"><div class="tabs" role="tablist" aria-label="Notebook sections"><button class="tab is-active" id="tab-1" type="button" role="tab" aria-selected="true" aria-controls="code-pane-1" data-target="code-pane-1">Setup & data</button><button class="tab" id="tab-2" type="button" role="tab" aria-selected="false" aria-controls="code-pane-2" data-target="code-pane-2">Features</button><button class="tab" id="tab-3" type="button" role="tab" aria-selected="false" aria-controls="code-pane-3" data-target="code-pane-3">XGBoost</button><button class="tab" id="tab-4" type="button" role="tab" aria-selected="false" aria-controls="code-pane-4" data-target="code-pane-4">LightGBM</button><button class="tab" id="tab-5" type="button" role="tab" aria-selected="false" aria-controls="code-pane-5" data-target="code-pane-5">Evaluation</button><button class="tab" id="tab-6" type="button" role="tab" aria-selected="false" aria-controls="code-pane-6" data-target="code-pane-6">Submission</button></div><button class="copy-button" type="button">Copy code</button></div><div class="code-stage"><section class="code-pane is-active" id="code-pane-1" role="tabpanel" aria-labelledby="tab-1">
+<div class="code-meta"><span>Setup & data · Original notebook cells</span><span>191 lines</span><span>Cells 4, 7, 9, 11</span></div>
+<pre class="source"><code data-source-file="Setup &amp; data" data-sha256="9ffc29a818ffbf4879a50fa425b6b87af916265d11fb577c5fee6cd54be2c45b"><span class="tok-comment"># Notebook code cell 4</span>
+!pip install <span class="tok-operator">/</span>kaggle<span class="tok-operator">/</span><span class="tok-builtin">input</span><span class="tok-operator">/</span>rdkit<span class="tok-operator">-</span><span class="tok-number">2025</span><span class="tok-operator">-</span><span class="tok-number">3</span><span class="tok-operator">-</span><span class="tok-number">3</span><span class="tok-operator">-</span>cp311<span class="tok-operator">/</span>rdkit<span class="tok-operator">-</span><span class="tok-number">2025.3</span><span class="tok-number">.3</span><span class="tok-operator">-</span>cp311<span class="tok-operator">-</span>cp311<span class="tok-operator">-</span>manylinux_2_28_x86_64<span class="tok-operator">.</span>whl
+<span class="tok-keyword">from</span> rdkit <span class="tok-keyword">import</span> RDLogger
+<span class="tok-keyword">import</span> os
+<span class="tok-keyword">import</span> json
+<span class="tok-keyword">import</span> pandas <span class="tok-keyword">as</span> pd
+<span class="tok-keyword">from</span> pathlib <span class="tok-keyword">import</span> Path
+<span class="tok-keyword">import</span> multiprocessing <span class="tok-keyword">as</span> mp
+<span class="tok-keyword">import</span> numpy <span class="tok-keyword">as</span> np
+<span class="tok-keyword">import</span> pandas <span class="tok-keyword">as</span> pd
+<span class="tok-keyword">from</span> rdkit <span class="tok-keyword">import</span> Chem
+<span class="tok-keyword">from</span> rdkit<span class="tok-operator">.</span>Chem <span class="tok-keyword">import</span> Descriptors<span class="tok-operator">,</span> rdMolDescriptors<span class="tok-operator">,</span> AllChem<span class="tok-operator">,</span> rdmolops
+<span class="tok-keyword">from</span> typing <span class="tok-keyword">import</span> List<span class="tok-operator">,</span> Tuple
+<span class="tok-keyword">from</span> sklearn<span class="tok-operator">.</span>model_selection <span class="tok-keyword">import</span> train_test_split<span class="tok-operator">,</span> KFold
+<span class="tok-keyword">import</span> xgboost <span class="tok-keyword">as</span> xgb
+<span class="tok-keyword">import</span> gc<span class="tok-operator">,</span> lightgbm <span class="tok-keyword">as</span> lgb
+<span class="tok-keyword">from</span> sklearn<span class="tok-operator">.</span>metrics <span class="tok-keyword">import</span> mean_absolute_error
+<span class="tok-keyword">from</span> collections <span class="tok-keyword">import</span> defaultdict
+<span class="tok-keyword">from</span> sklearn<span class="tok-operator">.</span>multioutput <span class="tok-keyword">import</span> MultiOutputRegressor
+<span class="tok-keyword">import</span> networkx <span class="tok-keyword">as</span> nx
+<span class="tok-keyword">import</span> matplotlib<span class="tok-operator">.</span>pyplot <span class="tok-keyword">as</span> plt
+<span class="tok-keyword">import</span> warnings<span class="tok-operator">;</span> warnings<span class="tok-operator">.</span>filterwarnings<span class="tok-operator">(</span><span class="tok-string">&quot;ignore&quot;</span><span class="tok-operator">)</span>
+RDLogger<span class="tok-operator">.</span>DisableLog<span class="tok-operator">(</span><span class="tok-string">&#x27;rdApp.*&#x27;</span><span class="tok-operator">)</span>
+
+<span class="tok-comment"># Notebook code cell 7</span>
+SEED <span class="tok-operator">=</span> <span class="tok-number">42</span>
+np<span class="tok-operator">.</span>random<span class="tok-operator">.</span>seed<span class="tok-operator">(</span>SEED<span class="tok-operator">)</span>
+
+<span class="tok-comment"># Notebook code cell 9</span>
+<span class="tok-comment"># 1) Load the original train &amp; test</span>
+DATA_DIR <span class="tok-operator">=</span> Path<span class="tok-operator">(</span><span class="tok-string">&quot;/kaggle/input/neurips-open-polymer-prediction-2025&quot;</span><span class="tok-operator">)</span>
+train_df    <span class="tok-operator">=</span> pd<span class="tok-operator">.</span>read_csv<span class="tok-operator">(</span>DATA_DIR <span class="tok-operator">/</span> <span class="tok-string">&quot;train.csv&quot;</span><span class="tok-operator">)</span> 
+test_df     <span class="tok-operator">=</span> pd<span class="tok-operator">.</span>read_csv<span class="tok-operator">(</span>DATA_DIR <span class="tok-operator">/</span> <span class="tok-string">&quot;test.csv&quot;</span><span class="tok-operator">)</span>
+
+<span class="tok-comment"># Notebook code cell 11</span>
+<span class="tok-comment"># -----------------------------------------------------------------------------------</span>
+<span class="tok-comment"># 2) Canonicalise SMILES to avoid duplicates like &#x27;*C=C(*)C&#x27; vs &#x27;*C(=C*)C&#x27;</span>
+<span class="tok-comment"># -----------------------------------------------------------------------------------</span>
+<span class="tok-keyword">def</span> make_smile_canonical<span class="tok-operator">(</span>smile<span class="tok-operator">:</span> <span class="tok-builtin">str</span><span class="tok-operator">)</span><span class="tok-operator">:</span>
+    <span class="tok-keyword">try</span><span class="tok-operator">:</span>
+        mol <span class="tok-operator">=</span> Chem<span class="tok-operator">.</span>MolFromSmiles<span class="tok-operator">(</span>smile<span class="tok-operator">)</span>
+        <span class="tok-keyword">return</span> Chem<span class="tok-operator">.</span>MolToSmiles<span class="tok-operator">(</span>mol<span class="tok-operator">,</span> canonical<span class="tok-operator">=</span><span class="tok-keyword">True</span><span class="tok-operator">)</span>
+    <span class="tok-keyword">except</span> <span class="tok-builtin">Exception</span><span class="tok-operator">:</span>
+        <span class="tok-keyword">return</span> np<span class="tok-operator">.</span>nan
+
+train_df<span class="tok-operator">[</span><span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">]</span> <span class="tok-operator">=</span> train_df<span class="tok-operator">[</span><span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">]</span><span class="tok-operator">.</span>apply<span class="tok-operator">(</span>make_smile_canonical<span class="tok-operator">)</span>
+test_df<span class="tok-operator">[</span><span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">]</span>  <span class="tok-operator">=</span> test_df<span class="tok-operator">[</span><span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">]</span><span class="tok-operator">.</span>apply<span class="tok-operator">(</span>make_smile_canonical<span class="tok-operator">)</span>
+
+<span class="tok-comment"># Keep a frozen copy of the mother dataset (for bias correction only)</span>
+base_train_df <span class="tok-operator">=</span> train_df<span class="tok-operator">.</span>copy<span class="tok-operator">(</span><span class="tok-operator">)</span>
+
+<span class="tok-comment"># -----------------------------------------------------------------------------------</span>
+<span class="tok-comment"># 3) Load external public datasets</span>
+<span class="tok-comment"># -----------------------------------------------------------------------------------</span>
+<span class="tok-comment"># 3-1) Tc dataset</span>
+data_tc <span class="tok-operator">=</span> <span class="tok-operator">(</span>
+    pd<span class="tok-operator">.</span>read_csv<span class="tok-operator">(</span><span class="tok-string">&quot;/kaggle/input/tc-smiles/Tc_SMILES.csv&quot;</span><span class="tok-operator">)</span>
+      <span class="tok-operator">.</span>rename<span class="tok-operator">(</span>columns<span class="tok-operator">=</span><span class="tok-operator">{</span><span class="tok-string">&quot;TC_mean&quot;</span><span class="tok-operator">:</span> <span class="tok-string">&quot;Tc&quot;</span><span class="tok-operator">}</span><span class="tok-operator">)</span>
+<span class="tok-operator">)</span>
+
+<span class="tok-comment"># 3-2) Tg supplement 1</span>
+data_tg2 <span class="tok-operator">=</span> <span class="tok-operator">(</span>
+    pd<span class="tok-operator">.</span>read_csv<span class="tok-operator">(</span><span class="tok-string">&quot;/kaggle/input/smiles-extra-data/JCIM_sup_bigsmiles.csv&quot;</span><span class="tok-operator">,</span>
+                usecols<span class="tok-operator">=</span><span class="tok-operator">[</span><span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">,</span> <span class="tok-string">&quot;Tg (C)&quot;</span><span class="tok-operator">]</span><span class="tok-operator">)</span>
+      <span class="tok-operator">.</span>rename<span class="tok-operator">(</span>columns<span class="tok-operator">=</span><span class="tok-operator">{</span><span class="tok-string">&quot;Tg (C)&quot;</span><span class="tok-operator">:</span> <span class="tok-string">&quot;Tg&quot;</span><span class="tok-operator">}</span><span class="tok-operator">)</span>
+<span class="tok-operator">)</span>
+
+<span class="tok-comment"># 3-3) Tg supplement 2</span>
+data_tg3 <span class="tok-operator">=</span> <span class="tok-operator">(</span>
+    pd<span class="tok-operator">.</span>read_excel<span class="tok-operator">(</span><span class="tok-string">&quot;/kaggle/input/smiles-extra-data/data_tg3.xlsx&quot;</span><span class="tok-operator">)</span>
+      <span class="tok-operator">.</span>rename<span class="tok-operator">(</span>columns<span class="tok-operator">=</span><span class="tok-operator">{</span><span class="tok-string">&quot;Tg [K]&quot;</span><span class="tok-operator">:</span> <span class="tok-string">&quot;Tg&quot;</span><span class="tok-operator">}</span><span class="tok-operator">)</span>
+<span class="tok-operator">)</span>
+data_tg3<span class="tok-operator">[</span><span class="tok-string">&quot;Tg&quot;</span><span class="tok-operator">]</span> <span class="tok-operator">=</span> data_tg3<span class="tok-operator">[</span><span class="tok-string">&quot;Tg&quot;</span><span class="tok-operator">]</span> <span class="tok-operator">-</span> <span class="tok-number">273.15</span>          <span class="tok-comment"># Kelvin → °C</span>
+
+<span class="tok-comment"># 3-4) Density dataset</span>
+data_dnst <span class="tok-operator">=</span> <span class="tok-operator">(</span>
+    pd<span class="tok-operator">.</span>read_excel<span class="tok-operator">(</span><span class="tok-string">&quot;/kaggle/input/smiles-extra-data/data_dnst1.xlsx&quot;</span><span class="tok-operator">)</span>
+      <span class="tok-operator">.</span>rename<span class="tok-operator">(</span>columns<span class="tok-operator">=</span><span class="tok-operator">{</span><span class="tok-string">&quot;density(g/cm3)&quot;</span><span class="tok-operator">:</span> <span class="tok-string">&quot;Density&quot;</span><span class="tok-operator">}</span><span class="tok-operator">)</span><span class="tok-operator">[</span><span class="tok-operator">[</span><span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">,</span> <span class="tok-string">&quot;Density&quot;</span><span class="tok-operator">]</span><span class="tok-operator">]</span>
+<span class="tok-operator">)</span>
+data_dnst<span class="tok-operator">[</span><span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">]</span> <span class="tok-operator">=</span> data_dnst<span class="tok-operator">[</span><span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">]</span><span class="tok-operator">.</span>apply<span class="tok-operator">(</span>make_smile_canonical<span class="tok-operator">)</span>
+<span class="tok-comment"># Remove odd entries and apply author’s correction</span>
+data_dnst <span class="tok-operator">=</span> <span class="tok-operator">(</span>
+    data_dnst
+      <span class="tok-operator">.</span>query<span class="tok-operator">(</span><span class="tok-string">&quot;SMILES.notnull() and Density.notnull() and Density != &#x27;nylon&#x27;&quot;</span><span class="tok-operator">)</span>
+      <span class="tok-operator">.</span>assign<span class="tok-operator">(</span>Density<span class="tok-operator">=</span><span class="tok-keyword">lambda</span> df<span class="tok-operator">:</span> df<span class="tok-operator">[</span><span class="tok-string">&quot;Density&quot;</span><span class="tok-operator">]</span><span class="tok-operator">.</span>astype<span class="tok-operator">(</span><span class="tok-builtin">float</span><span class="tok-operator">)</span> <span class="tok-operator">-</span> <span class="tok-number">0.118</span><span class="tok-operator">)</span>
+<span class="tok-operator">)</span>
+
+<span class="tok-comment"># 3-5) Tc supplement (NeurIPS dataset 1)</span>
+data_tc4 <span class="tok-operator">=</span> <span class="tok-operator">(</span>
+    pd<span class="tok-operator">.</span>read_csv<span class="tok-operator">(</span><span class="tok-string">&quot;/kaggle/input/neurips-open-polymer-prediction-2025/train_supplement/dataset1.csv&quot;</span><span class="tok-operator">)</span>
+      <span class="tok-operator">.</span>rename<span class="tok-operator">(</span>columns<span class="tok-operator">=</span><span class="tok-operator">{</span><span class="tok-string">&quot;TC_mean&quot;</span><span class="tok-operator">:</span> <span class="tok-string">&quot;Tc&quot;</span><span class="tok-operator">}</span><span class="tok-operator">)</span>
+<span class="tok-operator">)</span>
+
+<span class="tok-comment"># 3-6) Tg supplement (NeurIPS dataset 3)</span>
+data_tg4 <span class="tok-operator">=</span> <span class="tok-operator">(</span>
+    pd<span class="tok-operator">.</span>read_csv<span class="tok-operator">(</span><span class="tok-string">&quot;/kaggle/input/neurips-open-polymer-prediction-2025/train_supplement/dataset3.csv&quot;</span><span class="tok-operator">)</span>
+      <span class="tok-operator">.</span>rename<span class="tok-operator">(</span>columns<span class="tok-operator">=</span><span class="tok-operator">{</span><span class="tok-string">&quot;Tg&quot;</span><span class="tok-operator">:</span> <span class="tok-string">&quot;Tg&quot;</span><span class="tok-operator">}</span><span class="tok-operator">)</span>
+<span class="tok-operator">)</span>
+
+<span class="tok-comment"># 3-7) FFV supplement (NeurIPS dataset 4)</span>
+data_ffv <span class="tok-operator">=</span> <span class="tok-operator">(</span>
+    pd<span class="tok-operator">.</span>read_csv<span class="tok-operator">(</span><span class="tok-string">&quot;/kaggle/input/neurips-open-polymer-prediction-2025/train_supplement/dataset4.csv&quot;</span><span class="tok-operator">)</span>
+      <span class="tok-operator">.</span>rename<span class="tok-operator">(</span>columns<span class="tok-operator">=</span><span class="tok-operator">{</span><span class="tok-string">&quot;FFV&quot;</span><span class="tok-operator">:</span> <span class="tok-string">&quot;FFV&quot;</span><span class="tok-operator">}</span><span class="tok-operator">)</span>
+<span class="tok-operator">)</span>
+data_ffv<span class="tok-operator">[</span><span class="tok-string">&quot;FFV&quot;</span><span class="tok-operator">]</span> <span class="tok-operator">=</span> pd<span class="tok-operator">.</span>to_numeric<span class="tok-operator">(</span>data_ffv<span class="tok-operator">[</span><span class="tok-string">&quot;FFV&quot;</span><span class="tok-operator">]</span><span class="tok-operator">,</span> errors<span class="tok-operator">=</span><span class="tok-string">&quot;coerce&quot;</span><span class="tok-operator">)</span>
+
+<span class="tok-comment"># -----------------------------------------------------------------------------------</span>
+<span class="tok-comment"># 4) Helper to merge an extra dataset into train_df, with optional bias correction</span>
+<span class="tok-comment"># -----------------------------------------------------------------------------------</span>
+<span class="tok-keyword">def</span> add_extra_data<span class="tok-operator">(</span>df_train<span class="tok-operator">:</span> pd<span class="tok-operator">.</span>DataFrame<span class="tok-operator">,</span>
+                   df_extra<span class="tok-operator">:</span> pd<span class="tok-operator">.</span>DataFrame<span class="tok-operator">,</span>
+                   target<span class="tok-operator">:</span> <span class="tok-builtin">str</span><span class="tok-operator">,</span>
+                   dataset_name<span class="tok-operator">:</span> <span class="tok-builtin">str</span> <span class="tok-operator">=</span> <span class="tok-string">&quot;extra&quot;</span><span class="tok-operator">,</span>
+                   base_df<span class="tok-operator">:</span> pd<span class="tok-operator">.</span>DataFrame <span class="tok-operator">=</span> <span class="tok-keyword">None</span><span class="tok-operator">)</span> <span class="tok-operator">-&gt;</span> pd<span class="tok-operator">.</span>DataFrame<span class="tok-operator">:</span>
+    <span class="tok-string">&quot;&quot;&quot;
+    * Canonicalise SMILES in the extra dataset.
+    * If overlap with the mother dataset exists, compute mean difference (extra - base) on overlaps
+      and shift the entire external target by that delta (per-target correction). Print the delta.
+    * For SMILES already in the competition data, fill **missing** target values only.
+    * Fully new SMILES are appended to the training set.
+    &quot;&quot;&quot;</span>
+    count_before <span class="tok-operator">=</span> df_train<span class="tok-operator">[</span>target<span class="tok-operator">]</span><span class="tok-operator">.</span>notna<span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">.</span><span class="tok-builtin">sum</span><span class="tok-operator">(</span><span class="tok-operator">)</span>
+
+    <span class="tok-comment"># Prepare external (canonical &amp; aggregated)</span>
+    df_extra <span class="tok-operator">=</span> <span class="tok-operator">(</span>
+        df_extra
+          <span class="tok-operator">.</span>assign<span class="tok-operator">(</span>SMILES<span class="tok-operator">=</span><span class="tok-keyword">lambda</span> d<span class="tok-operator">:</span> d<span class="tok-operator">[</span><span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">]</span><span class="tok-operator">.</span>apply<span class="tok-operator">(</span>make_smile_canonical<span class="tok-operator">)</span><span class="tok-operator">)</span>
+          <span class="tok-operator">.</span>dropna<span class="tok-operator">(</span>subset<span class="tok-operator">=</span><span class="tok-operator">[</span><span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">]</span><span class="tok-operator">)</span>
+          <span class="tok-operator">.</span>groupby<span class="tok-operator">(</span><span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">,</span> as_index<span class="tok-operator">=</span><span class="tok-keyword">False</span><span class="tok-operator">)</span><span class="tok-operator">[</span>target<span class="tok-operator">]</span><span class="tok-operator">.</span>mean<span class="tok-operator">(</span><span class="tok-operator">)</span>
+    <span class="tok-operator">)</span>
+
+    <span class="tok-comment"># ----- Bias correction against the frozen mother dataset -----</span>
+    ref <span class="tok-operator">=</span> base_df <span class="tok-keyword">if</span> base_df <span class="tok-keyword">is</span> <span class="tok-keyword">not</span> <span class="tok-keyword">None</span> <span class="tok-keyword">else</span> df_train
+    base_map <span class="tok-operator">=</span> <span class="tok-operator">(</span>
+        ref<span class="tok-operator">[</span><span class="tok-operator">[</span><span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">,</span> target<span class="tok-operator">]</span><span class="tok-operator">]</span>
+          <span class="tok-operator">.</span>dropna<span class="tok-operator">(</span>subset<span class="tok-operator">=</span><span class="tok-operator">[</span><span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">,</span> target<span class="tok-operator">]</span><span class="tok-operator">)</span>
+          <span class="tok-operator">.</span>assign<span class="tok-operator">(</span>SMILES<span class="tok-operator">=</span><span class="tok-keyword">lambda</span> d<span class="tok-operator">:</span> d<span class="tok-operator">[</span><span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">]</span><span class="tok-operator">.</span>apply<span class="tok-operator">(</span>make_smile_canonical<span class="tok-operator">)</span><span class="tok-operator">)</span>
+          <span class="tok-operator">.</span>groupby<span class="tok-operator">(</span><span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">,</span> as_index<span class="tok-operator">=</span><span class="tok-keyword">False</span><span class="tok-operator">)</span><span class="tok-operator">[</span>target<span class="tok-operator">]</span><span class="tok-operator">.</span>mean<span class="tok-operator">(</span><span class="tok-operator">)</span>
+    <span class="tok-operator">)</span>
+
+    overlap <span class="tok-operator">=</span> df_extra<span class="tok-operator">.</span>merge<span class="tok-operator">(</span>base_map<span class="tok-operator">,</span> on<span class="tok-operator">=</span><span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">,</span> how<span class="tok-operator">=</span><span class="tok-string">&quot;inner&quot;</span><span class="tok-operator">,</span> suffixes<span class="tok-operator">=</span><span class="tok-operator">(</span><span class="tok-string">&quot;_ext&quot;</span><span class="tok-operator">,</span> <span class="tok-string">&quot;_base&quot;</span><span class="tok-operator">)</span><span class="tok-operator">)</span>
+    n_overlap <span class="tok-operator">=</span> <span class="tok-builtin">len</span><span class="tok-operator">(</span>overlap<span class="tok-operator">)</span>
+
+    <span class="tok-keyword">if</span> n_overlap <span class="tok-operator">&gt;</span> <span class="tok-number">0</span><span class="tok-operator">:</span>
+        mean_diff <span class="tok-operator">=</span> <span class="tok-operator">(</span>overlap<span class="tok-operator">[</span><span class="tok-string">f&quot;{target}_ext&quot;</span><span class="tok-operator">]</span> <span class="tok-operator">-</span> overlap<span class="tok-operator">[</span><span class="tok-string">f&quot;{target}_base&quot;</span><span class="tok-operator">]</span><span class="tok-operator">)</span><span class="tok-operator">.</span>mean<span class="tok-operator">(</span><span class="tok-operator">)</span>
+        <span class="tok-comment"># Shift external data to the mother dataset scale</span>
+        df_extra<span class="tok-operator">[</span>target<span class="tok-operator">]</span> <span class="tok-operator">=</span> df_extra<span class="tok-operator">[</span>target<span class="tok-operator">]</span> <span class="tok-operator">-</span> mean_diff
+        <span class="tok-builtin">print</span><span class="tok-operator">(</span><span class="tok-string">f&quot;[{dataset_name} | {target}] bias correction using {n_overlap} overlaps → Δ={mean_diff:+.6f}&quot;</span><span class="tok-operator">)</span>
+    <span class="tok-keyword">else</span><span class="tok-operator">:</span>
+        <span class="tok-builtin">print</span><span class="tok-operator">(</span><span class="tok-string">f&quot;[{dataset_name} | {target}] no overlap with mother dataset → no correction applied&quot;</span><span class="tok-operator">)</span>
+
+    <span class="tok-comment"># ----- Merge into current train (fill missing targets for existing SMILES; append new SMILES) -----</span>
+    intersect_smiles <span class="tok-operator">=</span> <span class="tok-builtin">set</span><span class="tok-operator">(</span>df_train<span class="tok-operator">[</span><span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">]</span><span class="tok-operator">)</span> <span class="tok-operator">&amp;</span> <span class="tok-builtin">set</span><span class="tok-operator">(</span>df_extra<span class="tok-operator">[</span><span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">]</span><span class="tok-operator">)</span>
+    new_smiles       <span class="tok-operator">=</span> <span class="tok-builtin">set</span><span class="tok-operator">(</span>df_extra<span class="tok-operator">[</span><span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">]</span><span class="tok-operator">)</span> <span class="tok-operator">-</span> <span class="tok-builtin">set</span><span class="tok-operator">(</span>df_train<span class="tok-operator">[</span><span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">]</span><span class="tok-operator">)</span>
+
+    <span class="tok-comment"># Fill missing target values for overlapping SMILES</span>
+    <span class="tok-keyword">if</span> intersect_smiles<span class="tok-operator">:</span>
+        ext_map <span class="tok-operator">=</span> <span class="tok-builtin">dict</span><span class="tok-operator">(</span><span class="tok-builtin">zip</span><span class="tok-operator">(</span>df_extra<span class="tok-operator">[</span><span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">]</span><span class="tok-operator">,</span> df_extra<span class="tok-operator">[</span>target<span class="tok-operator">]</span><span class="tok-operator">)</span><span class="tok-operator">)</span>
+        mask_overlap_missing <span class="tok-operator">=</span> <span class="tok-operator">(</span>df_train<span class="tok-operator">[</span><span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">]</span><span class="tok-operator">.</span>isin<span class="tok-operator">(</span>intersect_smiles<span class="tok-operator">)</span><span class="tok-operator">)</span> <span class="tok-operator">&amp;</span> <span class="tok-operator">(</span>df_train<span class="tok-operator">[</span>target<span class="tok-operator">]</span><span class="tok-operator">.</span>isna<span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">)</span>
+        df_train<span class="tok-operator">.</span>loc<span class="tok-operator">[</span>mask_overlap_missing<span class="tok-operator">,</span> target<span class="tok-operator">]</span> <span class="tok-operator">=</span> df_train<span class="tok-operator">.</span>loc<span class="tok-operator">[</span>mask_overlap_missing<span class="tok-operator">,</span> <span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">]</span><span class="tok-operator">.</span><span class="tok-builtin">map</span><span class="tok-operator">(</span>ext_map<span class="tok-operator">)</span><span class="tok-operator">.</span>values
+
+    <span class="tok-comment"># Append completely new rows (only SMILES + this target)</span>
+    df_train <span class="tok-operator">=</span> pd<span class="tok-operator">.</span>concat<span class="tok-operator">(</span>
+        <span class="tok-operator">[</span>df_train<span class="tok-operator">,</span> df_extra<span class="tok-operator">[</span>df_extra<span class="tok-operator">[</span><span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">]</span><span class="tok-operator">.</span>isin<span class="tok-operator">(</span>new_smiles<span class="tok-operator">)</span><span class="tok-operator">]</span><span class="tok-operator">[</span><span class="tok-operator">[</span><span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">,</span> target<span class="tok-operator">]</span><span class="tok-operator">]</span><span class="tok-operator">]</span><span class="tok-operator">,</span>
+        ignore_index<span class="tok-operator">=</span><span class="tok-keyword">True</span><span class="tok-operator">,</span>
+    <span class="tok-operator">)</span>
+
+    added <span class="tok-operator">=</span> df_train<span class="tok-operator">[</span>target<span class="tok-operator">]</span><span class="tok-operator">.</span>notna<span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">.</span><span class="tok-builtin">sum</span><span class="tok-operator">(</span><span class="tok-operator">)</span> <span class="tok-operator">-</span> count_before
+    <span class="tok-builtin">print</span><span class="tok-operator">(</span><span class="tok-string">f&#x27;[{target}] added {added:&gt;4} usable samples | new SMILES: {len(new_smiles)}&#x27;</span><span class="tok-operator">)</span>
+    <span class="tok-keyword">return</span> df_train
+
+<span class="tok-comment"># -----------------------------------------------------------------------------------</span>
+<span class="tok-comment"># 5) Merge the external datasets (with per-target bias correction if overlaps exist)</span>
+<span class="tok-comment"># -----------------------------------------------------------------------------------</span>
+train_df <span class="tok-operator">=</span> add_extra_data<span class="tok-operator">(</span>train_df<span class="tok-operator">,</span> data_tc<span class="tok-operator">,</span>   <span class="tok-string">&quot;Tc&quot;</span><span class="tok-operator">,</span>      dataset_name<span class="tok-operator">=</span><span class="tok-string">&quot;TC_public&quot;</span><span class="tok-operator">,</span>     base_df<span class="tok-operator">=</span>base_train_df<span class="tok-operator">)</span>
+train_df <span class="tok-operator">=</span> add_extra_data<span class="tok-operator">(</span>train_df<span class="tok-operator">,</span> data_tc4<span class="tok-operator">,</span>  <span class="tok-string">&quot;Tc&quot;</span><span class="tok-operator">,</span>      dataset_name<span class="tok-operator">=</span><span class="tok-string">&quot;TC_supp_ds1&quot;</span><span class="tok-operator">,</span>   base_df<span class="tok-operator">=</span>base_train_df<span class="tok-operator">)</span>
+train_df <span class="tok-operator">=</span> add_extra_data<span class="tok-operator">(</span>train_df<span class="tok-operator">,</span> data_tg2<span class="tok-operator">,</span>  <span class="tok-string">&quot;Tg&quot;</span><span class="tok-operator">,</span>      dataset_name<span class="tok-operator">=</span><span class="tok-string">&quot;TG_sup1_JCIM&quot;</span><span class="tok-operator">,</span>  base_df<span class="tok-operator">=</span>base_train_df<span class="tok-operator">)</span>
+train_df <span class="tok-operator">=</span> add_extra_data<span class="tok-operator">(</span>train_df<span class="tok-operator">,</span> data_tg3<span class="tok-operator">,</span>  <span class="tok-string">&quot;Tg&quot;</span><span class="tok-operator">,</span>      dataset_name<span class="tok-operator">=</span><span class="tok-string">&quot;TG_sup2_xlsx&quot;</span><span class="tok-operator">,</span>  base_df<span class="tok-operator">=</span>base_train_df<span class="tok-operator">)</span>
+train_df <span class="tok-operator">=</span> add_extra_data<span class="tok-operator">(</span>train_df<span class="tok-operator">,</span> data_tg4<span class="tok-operator">,</span>  <span class="tok-string">&quot;Tg&quot;</span><span class="tok-operator">,</span>      dataset_name<span class="tok-operator">=</span><span class="tok-string">&quot;TG_supp_ds3&quot;</span><span class="tok-operator">,</span>   base_df<span class="tok-operator">=</span>base_train_df<span class="tok-operator">)</span>
+train_df <span class="tok-operator">=</span> add_extra_data<span class="tok-operator">(</span>train_df<span class="tok-operator">,</span> data_dnst<span class="tok-operator">,</span> <span class="tok-string">&quot;Density&quot;</span><span class="tok-operator">,</span> dataset_name<span class="tok-operator">=</span><span class="tok-string">&quot;Density_sup1&quot;</span><span class="tok-operator">,</span>  base_df<span class="tok-operator">=</span>base_train_df<span class="tok-operator">)</span>
+train_df <span class="tok-operator">=</span> add_extra_data<span class="tok-operator">(</span>train_df<span class="tok-operator">,</span> data_ffv<span class="tok-operator">,</span>  <span class="tok-string">&quot;FFV&quot;</span><span class="tok-operator">,</span>     dataset_name<span class="tok-operator">=</span><span class="tok-string">&quot;FFV_supp_ds4&quot;</span><span class="tok-operator">,</span>  base_df<span class="tok-operator">=</span>base_train_df<span class="tok-operator">)</span>
+
+<span class="tok-comment"># -----------------------------------------------------------------------------------</span>
+<span class="tok-comment"># 6) Quick summary</span>
+<span class="tok-comment"># -----------------------------------------------------------------------------------</span>
+<span class="tok-builtin">print</span><span class="tok-operator">(</span><span class="tok-string">&quot;\n=== Sample counts per target (non-NaN) ===&quot;</span><span class="tok-operator">)</span>
+<span class="tok-keyword">for</span> col <span class="tok-keyword">in</span> <span class="tok-operator">[</span><span class="tok-string">&quot;Tg&quot;</span><span class="tok-operator">,</span> <span class="tok-string">&quot;FFV&quot;</span><span class="tok-operator">,</span> <span class="tok-string">&quot;Tc&quot;</span><span class="tok-operator">,</span> <span class="tok-string">&quot;Density&quot;</span><span class="tok-operator">,</span> <span class="tok-string">&quot;Rg&quot;</span><span class="tok-operator">]</span><span class="tok-operator">:</span>
+    <span class="tok-builtin">print</span><span class="tok-operator">(</span><span class="tok-string">f&quot;{col:&gt;8}: {train_df[col].notna().sum():&gt;6}&quot;</span><span class="tok-operator">)</span>
+
+<span class="tok-builtin">print</span><span class="tok-operator">(</span><span class="tok-string">f&quot;\ntrain_df shape: {train_df.shape}&quot;</span><span class="tok-operator">)</span>
+<span class="tok-builtin">print</span><span class="tok-operator">(</span><span class="tok-string">f&quot;test_df  shape: {test_df.shape}&quot;</span><span class="tok-operator">)</span></code></pre></section><section class="code-pane" id="code-pane-2" role="tabpanel" aria-labelledby="tab-2" hidden>
+<div class="code-meta"><span>Features · Original notebook cells</span><span>127 lines</span><span>Cells 13, 15, 16</span></div>
+<pre class="source"><code data-source-file="Features" data-sha256="a28894558a8d3a8787d666d079d64ccd573b35f2c9f0899eccba91c13483f0a7"><span class="tok-comment"># Notebook code cell 13</span>
+<span class="tok-comment"># --------------------- universal hyper-params (both sets share) -------------</span>
+DESC_FUNCS <span class="tok-operator">=</span> <span class="tok-operator">[</span>d<span class="tok-operator">[</span><span class="tok-number">1</span><span class="tok-operator">]</span> <span class="tok-keyword">for</span> d <span class="tok-keyword">in</span> Descriptors<span class="tok-operator">.</span>_descList<span class="tok-operator">]</span>     <span class="tok-comment"># 2D phys-chem</span>
+DESC_NAMES <span class="tok-operator">=</span> <span class="tok-operator">[</span>d<span class="tok-operator">[</span><span class="tok-number">0</span><span class="tok-operator">]</span> <span class="tok-keyword">for</span> d <span class="tok-keyword">in</span> Descriptors<span class="tok-operator">.</span>_descList<span class="tok-operator">]</span>
+
+RADIUS <span class="tok-operator">=</span> <span class="tok-number">2</span>          <span class="tok-comment"># Morgan radius</span>
+FP_ECFP_1024 <span class="tok-operator">=</span> <span class="tok-number">1024</span> <span class="tok-comment"># for XGBoost</span>
+FP_ECFP_2048 <span class="tok-operator">=</span> <span class="tok-number">2048</span> <span class="tok-comment"># for LightGBM</span>
+FP_ATOMPAIR   <span class="tok-operator">=</span> <span class="tok-number">2048</span>
+
+N_CPUS <span class="tok-operator">=</span> <span class="tok-builtin">max</span><span class="tok-operator">(</span>mp<span class="tok-operator">.</span>cpu_count<span class="tok-operator">(</span><span class="tok-operator">)</span> <span class="tok-operator">-</span> <span class="tok-number">1</span><span class="tok-operator">,</span> <span class="tok-number">1</span><span class="tok-operator">)</span>
+
+<span class="tok-comment"># --------------------- helper ------------------------------------------------</span>
+<span class="tok-keyword">def</span> mol_from_smiles<span class="tok-operator">(</span>sm<span class="tok-operator">)</span><span class="tok-operator">:</span>
+    <span class="tok-keyword">try</span><span class="tok-operator">:</span>
+        <span class="tok-keyword">return</span> Chem<span class="tok-operator">.</span>MolFromSmiles<span class="tok-operator">(</span>sm<span class="tok-operator">)</span>
+    <span class="tok-keyword">except</span> <span class="tok-builtin">Exception</span><span class="tok-operator">:</span>
+        <span class="tok-keyword">return</span> <span class="tok-keyword">None</span>
+
+<span class="tok-keyword">def</span> bitvect_to_numpy<span class="tok-operator">(</span>bv<span class="tok-operator">)</span><span class="tok-operator">:</span>          <span class="tok-comment"># RDKit ExplicitBitVect → np.uint8 array</span>
+    <span class="tok-keyword">return</span> np<span class="tok-operator">.</span>frombuffer<span class="tok-operator">(</span>bv<span class="tok-operator">.</span>ToBitString<span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">.</span>encode<span class="tok-operator">(</span><span class="tok-string">&quot;utf-8&quot;</span><span class="tok-operator">)</span><span class="tok-operator">,</span> <span class="tok-string">&quot;S1&quot;</span><span class="tok-operator">)</span><span class="tok-operator">.</span>astype<span class="tok-operator">(</span>np<span class="tok-operator">.</span>uint8<span class="tok-operator">)</span>
+
+<span class="tok-keyword">def</span> featurise<span class="tok-operator">(</span>smiles<span class="tok-operator">:</span> <span class="tok-builtin">str</span><span class="tok-operator">,</span> kind<span class="tok-operator">:</span> <span class="tok-builtin">str</span><span class="tok-operator">)</span><span class="tok-operator">:</span>
+    <span class="tok-string">&quot;&quot;&quot;
+    kind = &#x27;xgb&#x27;  -&gt; desc + ECFP1024
+    kind = &#x27;lgbm&#x27; -&gt; desc + ECFP2048 + AtomPair2048
+    &quot;&quot;&quot;</span>
+    mol <span class="tok-operator">=</span> mol_from_smiles<span class="tok-operator">(</span>smiles<span class="tok-operator">)</span>
+    <span class="tok-keyword">if</span> mol <span class="tok-keyword">is</span> <span class="tok-keyword">None</span><span class="tok-operator">:</span>
+        <span class="tok-keyword">return</span> <span class="tok-keyword">None</span>   <span class="tok-comment"># will be filtered later</span>
+
+    feat <span class="tok-operator">=</span> <span class="tok-operator">[</span><span class="tok-operator">]</span>
+
+    <span class="tok-comment"># ==== continuous descriptors ====</span>
+    feat<span class="tok-operator">.</span>extend<span class="tok-operator">(</span>f<span class="tok-operator">(</span>mol<span class="tok-operator">)</span> <span class="tok-keyword">for</span> f <span class="tok-keyword">in</span> DESC_FUNCS<span class="tok-operator">)</span>
+
+    <span class="tok-comment"># ==== fingerprints ====</span>
+    <span class="tok-keyword">if</span> kind <span class="tok-operator">==</span> <span class="tok-string">&quot;xgb&quot;</span><span class="tok-operator">:</span>
+        bv <span class="tok-operator">=</span> AllChem<span class="tok-operator">.</span>GetMorganFingerprintAsBitVect<span class="tok-operator">(</span>mol<span class="tok-operator">,</span> RADIUS<span class="tok-operator">,</span> nBits<span class="tok-operator">=</span>FP_ECFP_1024<span class="tok-operator">)</span>
+        feat<span class="tok-operator">.</span>extend<span class="tok-operator">(</span>bitvect_to_numpy<span class="tok-operator">(</span>bv<span class="tok-operator">)</span><span class="tok-operator">)</span>
+    <span class="tok-keyword">else</span><span class="tok-operator">:</span>  <span class="tok-comment"># &#x27;lgbm&#x27;</span>
+        bv1 <span class="tok-operator">=</span> AllChem<span class="tok-operator">.</span>GetMorganFingerprintAsBitVect<span class="tok-operator">(</span>mol<span class="tok-operator">,</span> RADIUS<span class="tok-operator">,</span> nBits<span class="tok-operator">=</span>FP_ECFP_2048<span class="tok-operator">)</span>
+        bv2 <span class="tok-operator">=</span> rdMolDescriptors<span class="tok-operator">.</span>GetHashedAtomPairFingerprintAsBitVect<span class="tok-operator">(</span>mol<span class="tok-operator">,</span> nBits<span class="tok-operator">=</span>FP_ATOMPAIR<span class="tok-operator">)</span>
+        feat<span class="tok-operator">.</span>extend<span class="tok-operator">(</span>bitvect_to_numpy<span class="tok-operator">(</span>bv1<span class="tok-operator">)</span><span class="tok-operator">)</span>
+        feat<span class="tok-operator">.</span>extend<span class="tok-operator">(</span>bitvect_to_numpy<span class="tok-operator">(</span>bv2<span class="tok-operator">)</span><span class="tok-operator">)</span>
+
+    <span class="tok-comment"># ==== gragh feature ====</span>
+    adj <span class="tok-operator">=</span> rdmolops<span class="tok-operator">.</span>GetAdjacencyMatrix<span class="tok-operator">(</span>mol<span class="tok-operator">)</span>
+    G   <span class="tok-operator">=</span> nx<span class="tok-operator">.</span>from_numpy_array<span class="tok-operator">(</span>adj<span class="tok-operator">)</span>
+
+    <span class="tok-keyword">if</span> nx<span class="tok-operator">.</span>is_connected<span class="tok-operator">(</span>G<span class="tok-operator">)</span><span class="tok-operator">:</span>
+        feat<span class="tok-operator">.</span>append<span class="tok-operator">(</span>nx<span class="tok-operator">.</span>diameter<span class="tok-operator">(</span>G<span class="tok-operator">)</span><span class="tok-operator">)</span>                       <span class="tok-comment"># graph_diameter</span>
+        feat<span class="tok-operator">.</span>append<span class="tok-operator">(</span>nx<span class="tok-operator">.</span>average_shortest_path_length<span class="tok-operator">(</span>G<span class="tok-operator">)</span><span class="tok-operator">)</span>   <span class="tok-comment"># avg_shortest_path</span>
+    <span class="tok-keyword">else</span><span class="tok-operator">:</span>
+        feat<span class="tok-operator">.</span>extend<span class="tok-operator">(</span><span class="tok-operator">[</span><span class="tok-number">0</span><span class="tok-operator">,</span> <span class="tok-number">0</span><span class="tok-operator">]</span><span class="tok-operator">)</span>
+
+    feat<span class="tok-operator">.</span>append<span class="tok-operator">(</span><span class="tok-builtin">len</span><span class="tok-operator">(</span>nx<span class="tok-operator">.</span>cycle_basis<span class="tok-operator">(</span>G<span class="tok-operator">)</span><span class="tok-operator">)</span><span class="tok-operator">)</span>                   <span class="tok-comment"># num_cycles</span>
+
+    <span class="tok-keyword">return</span> feat
+
+<span class="tok-keyword">def</span> build_all_features<span class="tok-operator">(</span>df<span class="tok-operator">:</span> pd<span class="tok-operator">.</span>DataFrame<span class="tok-operator">,</span> kind<span class="tok-operator">:</span> <span class="tok-builtin">str</span><span class="tok-operator">)</span><span class="tok-operator">:</span>
+    pool  <span class="tok-operator">=</span> mp<span class="tok-operator">.</span>Pool<span class="tok-operator">(</span>N_CPUS<span class="tok-operator">)</span>
+    feats <span class="tok-operator">=</span> pool<span class="tok-operator">.</span>starmap<span class="tok-operator">(</span>featurise<span class="tok-operator">,</span> <span class="tok-operator">[</span><span class="tok-operator">(</span>sm<span class="tok-operator">,</span> kind<span class="tok-operator">)</span> <span class="tok-keyword">for</span> sm <span class="tok-keyword">in</span> df<span class="tok-operator">[</span><span class="tok-string">&quot;SMILES&quot;</span><span class="tok-operator">]</span><span class="tok-operator">]</span><span class="tok-operator">)</span>
+    pool<span class="tok-operator">.</span>close<span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">;</span> pool<span class="tok-operator">.</span>join<span class="tok-operator">(</span><span class="tok-operator">)</span>
+    <span class="tok-comment"># keep only successful mol→feats</span>
+    good <span class="tok-operator">=</span> <span class="tok-operator">[</span>i <span class="tok-keyword">for</span> i<span class="tok-operator">,</span>f <span class="tok-keyword">in</span> <span class="tok-builtin">enumerate</span><span class="tok-operator">(</span>feats<span class="tok-operator">)</span> <span class="tok-keyword">if</span> f <span class="tok-keyword">is</span> <span class="tok-keyword">not</span> <span class="tok-keyword">None</span><span class="tok-operator">]</span>
+    X    <span class="tok-operator">=</span> np<span class="tok-operator">.</span>array<span class="tok-operator">(</span><span class="tok-operator">[</span>feats<span class="tok-operator">[</span>i<span class="tok-operator">]</span> <span class="tok-keyword">for</span> i <span class="tok-keyword">in</span> good<span class="tok-operator">]</span><span class="tok-operator">,</span> dtype<span class="tok-operator">=</span>np<span class="tok-operator">.</span>float32<span class="tok-operator">)</span>
+    <span class="tok-comment"># zero‐fill NaN/Inf</span>
+    X<span class="tok-operator">[</span>np<span class="tok-operator">.</span>isinf<span class="tok-operator">(</span>X<span class="tok-operator">)</span><span class="tok-operator">]</span> <span class="tok-operator">=</span> np<span class="tok-operator">.</span>nan
+    <span class="tok-comment">#X    = np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0)</span>
+    <span class="tok-keyword">return</span> X<span class="tok-operator">,</span> good
+
+<span class="tok-comment"># 1) Featurize TRAIN set</span>
+X_all_xgb<span class="tok-operator">,</span> idx_train <span class="tok-operator">=</span> build_all_features<span class="tok-operator">(</span>train_df<span class="tok-operator">,</span> kind<span class="tok-operator">=</span><span class="tok-string">&quot;xgb&quot;</span><span class="tok-operator">)</span>
+X_all_lgbm<span class="tok-operator">,</span> _        <span class="tok-operator">=</span> build_all_features<span class="tok-operator">(</span>train_df<span class="tok-operator">,</span> kind<span class="tok-operator">=</span><span class="tok-string">&quot;lgbm&quot;</span><span class="tok-operator">)</span>
+
+<span class="tok-comment"># Align Y to X_all_xgb</span>
+targets <span class="tok-operator">=</span> <span class="tok-operator">[</span><span class="tok-string">&quot;Tg&quot;</span><span class="tok-operator">,</span> <span class="tok-string">&quot;FFV&quot;</span><span class="tok-operator">,</span> <span class="tok-string">&quot;Tc&quot;</span><span class="tok-operator">,</span> <span class="tok-string">&quot;Density&quot;</span><span class="tok-operator">,</span> <span class="tok-string">&quot;Rg&quot;</span><span class="tok-operator">]</span>
+Y_all <span class="tok-operator">=</span> train_df<span class="tok-operator">.</span>loc<span class="tok-operator">[</span>idx_train<span class="tok-operator">,</span> targets<span class="tok-operator">]</span><span class="tok-operator">.</span>values  <span class="tok-comment"># shape = (n_train,5)</span>
+
+<span class="tok-comment"># 2) Featurize TEST set</span>
+X_test_xgb<span class="tok-operator">,</span> idx_test_xgb   <span class="tok-operator">=</span> build_all_features<span class="tok-operator">(</span>test_df<span class="tok-operator">,</span> kind<span class="tok-operator">=</span><span class="tok-string">&quot;xgb&quot;</span><span class="tok-operator">)</span>
+X_test_lgbm<span class="tok-operator">,</span> idx_test_lgbm <span class="tok-operator">=</span> build_all_features<span class="tok-operator">(</span>test_df<span class="tok-operator">,</span> kind<span class="tok-operator">=</span><span class="tok-string">&quot;lgbm&quot;</span><span class="tok-operator">)</span>
+test_ids_xgb  <span class="tok-operator">=</span> test_df<span class="tok-operator">[</span><span class="tok-string">&quot;id&quot;</span><span class="tok-operator">]</span><span class="tok-operator">.</span>values<span class="tok-operator">[</span>idx_test_xgb<span class="tok-operator">]</span>
+test_ids_lgbm <span class="tok-operator">=</span> test_df<span class="tok-operator">[</span><span class="tok-string">&quot;id&quot;</span><span class="tok-operator">]</span><span class="tok-operator">.</span>values<span class="tok-operator">[</span>idx_test_lgbm<span class="tok-operator">]</span>
+
+<span class="tok-builtin">print</span><span class="tok-operator">(</span><span class="tok-string">f&quot;Train XGB features:   {X_all_xgb.shape}&quot;</span><span class="tok-operator">)</span>
+<span class="tok-builtin">print</span><span class="tok-operator">(</span><span class="tok-string">f&quot;Train LightGBM feats: {X_all_lgbm.shape}&quot;</span><span class="tok-operator">)</span>
+<span class="tok-builtin">print</span><span class="tok-operator">(</span><span class="tok-string">f&quot;Test  XGB features:   {X_test_xgb.shape}&quot;</span><span class="tok-operator">)</span>
+<span class="tok-builtin">print</span><span class="tok-operator">(</span><span class="tok-string">f&quot;Test  LightGBM feats: {X_test_lgbm.shape}&quot;</span><span class="tok-operator">)</span>
+
+<span class="tok-comment"># Notebook code cell 15</span>
+<span class="tok-comment"># ==== save_all_features.py ====</span>
+<span class="tok-keyword">import</span> joblib<span class="tok-operator">,</span> os
+
+FILE <span class="tok-operator">=</span> <span class="tok-string">&quot;/kaggle/working/polymer_feats.pkl&quot;</span>
+
+joblib<span class="tok-operator">.</span>dump<span class="tok-operator">(</span>
+    <span class="tok-operator">{</span>
+        <span class="tok-string">&quot;X_all_xgb&quot;</span>     <span class="tok-operator">:</span> X_all_xgb<span class="tok-operator">,</span>
+        <span class="tok-string">&quot;X_all_lgbm&quot;</span>    <span class="tok-operator">:</span> X_all_lgbm<span class="tok-operator">,</span>
+        <span class="tok-string">&quot;idx_train&quot;</span>     <span class="tok-operator">:</span> idx_train<span class="tok-operator">,</span>
+        <span class="tok-string">&quot;Y_all&quot;</span>         <span class="tok-operator">:</span> Y_all<span class="tok-operator">,</span>
+        <span class="tok-string">&quot;X_test_xgb&quot;</span>    <span class="tok-operator">:</span> X_test_xgb<span class="tok-operator">,</span>
+        <span class="tok-string">&quot;X_test_lgbm&quot;</span>   <span class="tok-operator">:</span> X_test_lgbm<span class="tok-operator">,</span>
+        <span class="tok-string">&quot;idx_test_xgb&quot;</span>  <span class="tok-operator">:</span> idx_test_xgb<span class="tok-operator">,</span>
+        <span class="tok-string">&quot;idx_test_lgbm&quot;</span> <span class="tok-operator">:</span> idx_test_lgbm<span class="tok-operator">,</span>
+        <span class="tok-string">&quot;test_ids_xgb&quot;</span>  <span class="tok-operator">:</span> test_ids_xgb<span class="tok-operator">,</span>
+        <span class="tok-string">&quot;test_ids_lgbm&quot;</span> <span class="tok-operator">:</span> test_ids_lgbm<span class="tok-operator">,</span>
+    <span class="tok-operator">}</span><span class="tok-operator">,</span>
+    FILE<span class="tok-operator">,</span>
+    compress<span class="tok-operator">=</span><span class="tok-number">3</span><span class="tok-operator">,</span>   <span class="tok-comment"># gzip‑level compression, small &amp; fast</span>
+<span class="tok-operator">)</span>
+<span class="tok-builtin">print</span><span class="tok-operator">(</span><span class="tok-string">f&quot;✅  Features saved → {FILE}&quot;</span><span class="tok-operator">)</span>
+
+
+<span class="tok-comment"># Notebook code cell 16</span>
+<span class="tok-comment"># ==== load_all_features.py ====</span>
+<span class="tok-keyword">import</span> joblib<span class="tok-operator">,</span> os
+
+FILE <span class="tok-operator">=</span> <span class="tok-string">&quot;/kaggle/working/polymer_feats.pkl&quot;</span>
+
+_loaded <span class="tok-operator">=</span> joblib<span class="tok-operator">.</span>load<span class="tok-operator">(</span>FILE<span class="tok-operator">)</span>       <span class="tok-comment"># returns the dict we saved</span>
+<span class="tok-builtin">globals</span><span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">.</span>update<span class="tok-operator">(</span>_loaded<span class="tok-operator">)</span>         <span class="tok-comment"># put every key back into workspace</span>
+
+<span class="tok-builtin">print</span><span class="tok-operator">(</span><span class="tok-string">&quot;✅  Loaded variables:&quot;</span><span class="tok-operator">,</span> <span class="tok-string">&quot;, &quot;</span><span class="tok-operator">.</span>join<span class="tok-operator">(</span>_loaded<span class="tok-operator">.</span>keys<span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">)</span><span class="tok-operator">)</span>
+<span class="tok-comment"># now X_all_xgb, Y_all, … are ready to use</span>
+</code></pre></section><section class="code-pane" id="code-pane-3" role="tabpanel" aria-labelledby="tab-3" hidden>
+<div class="code-meta"><span>XGBoost · Original notebook cells</span><span>182 lines</span><span>Cells 21</span></div>
+<pre class="source"><code data-source-file="XGBoost" data-sha256="98076af9bb8baafe4a008cc1527daa4acb265a4b5e29ca32f6ed4d91f8a92a48"><span class="tok-comment"># Notebook code cell 21</span>
+<span class="tok-string">&#x27;&#x27;&#x27;# ============================================================
+# 0)  global setup
+# ============================================================
+SAVE_DIR          = &quot;/kaggle/working&quot;
+EARLY_STOP_ROUNDS = 100
+RUN_GRID_SEARCH   = False      # True → full grid search, False → use best_params
+N_FOLDS           = 5         # folds for hyper‑param search
+FINAL_N_FOLDS     = 10        # NEW: folds for final model ensembling
+
+os.makedirs(SAVE_DIR, exist_ok=True)
+FIG_DIR = os.path.join(SAVE_DIR, &quot;figs_xgb&quot;)
+os.makedirs(FIG_DIR, exist_ok=True)
+
+# X_all_xgb, Y_all, targets, X_test_xgb, test_ids_xgb, train_df, test_df
+# are assumed to be already prepared earlier in the notebook/script
+# --------------------------------------------------------------------
+
+# ============================================================
+# 1) hyper‑parameter grid
+# ============================================================
+param_grid = {
+    &quot;learning_rate&quot;:    [0.01, 0.05, 0.07],
+    &quot;max_depth&quot;:        [6, 8],
+    &quot;subsample&quot;:        [0.5, 0.6, 1.0],
+    &quot;colsample_bytree&quot;: [0.5, 0.6],
+    &quot;reg_lambda&quot;:       [0.0, 1.0, 2.0],
+}
+
+# ============================================================
+# 2) manual best params  (only used when RUN_GRID_SEARCH=False)
+# ============================================================
+best_params = {
+    &quot;Tg&quot;:      {&quot;tree_method&quot;: &quot;hist&quot;, &quot;device&quot;: &quot;cuda&quot;, &quot;objective&quot;: &quot;reg:squarederror&quot;,
+                &quot;eval_metric&quot;: &quot;mae&quot;, &quot;learning_rate&quot;: 0.01, &quot;max_depth&quot;: 6,
+                &quot;subsample&quot;: 0.5, &quot;colsample_bytree&quot;: 0.5, &quot;reg_lambda&quot;: 1.0, &quot;seed&quot;: SEED},
+    &quot;FFV&quot;:     {&quot;tree_method&quot;: &quot;hist&quot;, &quot;device&quot;: &quot;cuda&quot;, &quot;objective&quot;: &quot;reg:squarederror&quot;,
+                &quot;eval_metric&quot;: &quot;mae&quot;, &quot;learning_rate&quot;: 0.01, &quot;max_depth&quot;: 6,
+                &quot;subsample&quot;: 0.5, &quot;colsample_bytree&quot;: 0.6, &quot;reg_lambda&quot;: 2.0, &quot;seed&quot;: SEED},
+    &quot;Tc&quot;:      {&quot;tree_method&quot;: &quot;hist&quot;, &quot;device&quot;: &quot;cuda&quot;, &quot;objective&quot;: &quot;reg:squarederror&quot;,
+                &quot;eval_metric&quot;: &quot;mae&quot;, &quot;learning_rate&quot;: 0.01, &quot;max_depth&quot;: 6,
+                &quot;subsample&quot;: 0.6, &quot;colsample_bytree&quot;: 0.5, &quot;reg_lambda&quot;: 2.0, &quot;seed&quot;: SEED},
+    &quot;Density&quot;: {&quot;tree_method&quot;: &quot;hist&quot;, &quot;device&quot;: &quot;cuda&quot;, &quot;objective&quot;: &quot;reg:squarederror&quot;,
+                &quot;eval_metric&quot;: &quot;mae&quot;, &quot;learning_rate&quot;: 0.01, &quot;max_depth&quot;: 6,
+                &quot;subsample&quot;: 0.6, &quot;colsample_bytree&quot;: 0.5, &quot;reg_lambda&quot;: 0.0, &quot;seed&quot;: SEED},
+    &quot;Rg&quot;:      {&quot;tree_method&quot;: &quot;hist&quot;, &quot;device&quot;: &quot;cuda&quot;, &quot;objective&quot;: &quot;reg:squarederror&quot;,
+                &quot;eval_metric&quot;: &quot;mae&quot;, &quot;learning_rate&quot;: 0.01, &quot;max_depth&quot;: 8,
+                &quot;subsample&quot;: 0.6, &quot;colsample_bytree&quot;: 0.5, &quot;reg_lambda&quot;: 2.0, &quot;seed&quot;: SEED},
+}
+
+# ============================================================
+# 3) helper: K‑fold CV MAE
+# ============================================================
+cv_search = KFold(n_splits=N_FOLDS, shuffle=True, random_state=SEED)  # for grid search
+
+
+def cv_mae(params, X, y):
+    &quot;&quot;&quot;5‑fold MAE + mean best_iteration (for grid search)&quot;&quot;&quot;
+    ms, iters = [], []
+    for tr, va in cv_search.split(X):
+        booster = xgb.train(
+            params,
+            xgb.DMatrix(X[tr], label=y[tr]),
+            num_boost_round=100_000,
+            evals=[(xgb.DMatrix(X[va], label=y[va]), &quot;val&quot;)],
+            early_stopping_rounds=EARLY_STOP_ROUNDS,
+            verbose_eval=False,
+        )
+        pred = booster.predict(
+            xgb.DMatrix(X[va]), iteration_range=(0, booster.best_iteration + 1)
+        )
+        ms.append(mean_absolute_error(y[va], pred))
+        iters.append(booster.best_iteration)
+    return float(np.mean(ms)), int(np.mean(iters))
+
+# ============================================================
+# 4) main loop  (grid search + 10‑fold model ensembling)
+# ============================================================
+plot_data         = {p: {t: [] for t in targets} for p in param_grid}
+cv_results        = {}
+model_paths       = {}               # NEW: per‑target list of 10 fold models
+chosen_param_set  = {}               # store full best configs
+fold_mae_dict = {t: [] for t in targets}   # ← NEW
+
+print(&quot;Running evaluation …\n&quot;)
+
+for t_idx, tgt in enumerate(targets):
+    X_tgt = X_all_xgb[np.isfinite(Y_all[:, t_idx])]
+    y_tgt = Y_all[np.isfinite(Y_all[:, t_idx]), t_idx]
+
+    # ---------- 4.1  hyper‑param search (5‑fold) ---------- #
+    if RUN_GRID_SEARCH:
+        best_mae, best_cfg, best_iter = 1e9, None, None
+        for lr in param_grid[&quot;learning_rate&quot;]:
+            for md in param_grid[&quot;max_depth&quot;]:
+                for ss in param_grid[&quot;subsample&quot;]:
+                    for cs in param_grid[&quot;colsample_bytree&quot;]:
+                        for rl in param_grid[&quot;reg_lambda&quot;]:
+                            p = {&quot;tree_method&quot;: &quot;hist&quot;, &quot;device&quot;: &quot;cuda&quot;,
+                                 &quot;objective&quot;: &quot;reg:squarederror&quot;,
+                                 &quot;eval_metric&quot;: &quot;mae&quot;, &quot;learning_rate&quot;: lr,
+                                 &quot;max_depth&quot;: md, &quot;subsample&quot;: ss,
+                                 &quot;colsample_bytree&quot;: cs, &quot;reg_lambda&quot;: rl,
+                                 &quot;seed&quot;: SEED}
+
+                            mae, it_ = cv_mae(p, X_tgt, y_tgt)
+
+                            # collect diagnostic plot points
+                            plot_data[&quot;learning_rate&quot;][tgt].append((lr, mae))
+                            plot_data[&quot;max_depth&quot;][tgt].append((md, mae))
+                            plot_data[&quot;subsample&quot;][tgt].append((ss, mae))
+                            plot_data[&quot;colsample_bytree&quot;][tgt].append((cs, mae))
+                            plot_data[&quot;reg_lambda&quot;][tgt].append((rl, mae))
+
+                            if mae &lt; best_mae:
+                                best_mae, best_cfg, best_iter = mae, p.copy(), it_
+                                
+        print(f&quot;◎ {tgt}  best grid params = {best_cfg} | &quot;
+              f&quot;best_iteration ≈ {best_iter} | CV MAE = {best_mae:.5f}&quot;)
+        chosen_params = best_cfg
+    else:
+        chosen_params = best_params[tgt]
+        best_mae, _ = cv_mae(chosen_params, X_tgt, y_tgt)
+        for pname in plot_data:
+            plot_data[pname][tgt].append((chosen_params[pname], best_mae))
+
+    chosen_param_set[tgt] = chosen_params
+
+    # ---------- 4.2  final 10‑fold training &amp; saving ---------- #
+    cv_final = KFold(n_splits=FINAL_N_FOLDS, shuffle=True, random_state=SEED)
+    fold_maes = []
+    paths = []
+
+    for f_id, (tr, va) in enumerate(cv_final.split(X_tgt)):
+        booster = xgb.train(
+            chosen_params,
+            xgb.DMatrix(X_tgt[tr], label=y_tgt[tr]),
+            num_boost_round=100_000,
+            evals=[(xgb.DMatrix(X_tgt[va], label=y_tgt[va]), &quot;val&quot;)],
+            early_stopping_rounds=EARLY_STOP_ROUNDS,
+            verbose_eval=False,
+        )
+        preds = booster.predict(
+            xgb.DMatrix(X_tgt[va]), iteration_range=(0, booster.best_iteration + 1)
+        )
+        mae_fold = mean_absolute_error(y_tgt[va], preds)
+        fold_maes.append(mae_fold)
+        fold_mae_dict[tgt].append(mae_fold)
+
+        model_path = os.path.join(SAVE_DIR, f&quot;xgb_{tgt}_fold{f_id}.json&quot;)
+        booster.save_model(model_path)
+        paths.append(model_path)
+
+    # store per‑target paths
+    model_paths[tgt] = paths.copy()
+
+    print(
+        f&quot;★ {tgt}: Fold MAEs = {[f&#x27;{m:.5f}&#x27; for m in fold_maes]} | &quot;
+        f&quot;Mean = {np.mean(fold_maes):.5f} (best grid MAE {best_mae:.5f})&quot;
+    )
+
+# ============================================================
+# 5) 25 linear‑scale diagnostic plots (from grid search)
+# ============================================================
+color_map = {t: c for t, c in zip(
+    targets, plt.rcParams[&quot;axes.prop_cycle&quot;].by_key()[&quot;color&quot;]
+)}
+
+for pname, tgt_dict in plot_data.items():          # 5 parameters
+    for tgt in targets:                            # 5 targets
+        pts = tgt_dict[tgt]
+        if not pts:
+            continue
+        xs, ys = zip(*sorted(pts, key=lambda v: v[0]))
+        plt.figure()
+        plt.plot(xs, ys, &quot;-o&quot;, color=color_map[tgt])
+        plt.xlabel(pname)
+        plt.ylabel(&quot;Mean CV MAE&quot;)
+        plt.title(f&quot;{tgt} – {pname} vs MAE&quot;)
+        plt.grid(True)
+        plt.savefig(os.path.join(FIG_DIR, f&quot;{pname}_{tgt}.png&quot;), dpi=120)
+        plt.close()&#x27;&#x27;&#x27;</span></code></pre></section><section class="code-pane" id="code-pane-4" role="tabpanel" aria-labelledby="tab-4" hidden>
+<div class="code-meta"><span>LightGBM · Original notebook cells</span><span>186 lines</span><span>Cells 25</span></div>
+<pre class="source"><code data-source-file="LightGBM" data-sha256="5e6203268e4776314e849b990764a8f92eeb24a74b09d673c45bd66db3b1a727"><span class="tok-comment"># Notebook code cell 25</span>
+<span class="tok-comment"># ============================================================</span>
+<span class="tok-comment"># 0)  global setup</span>
+<span class="tok-comment"># ============================================================</span>
+SAVE_DIR          <span class="tok-operator">=</span> <span class="tok-string">&quot;/kaggle/working&quot;</span>
+EARLY_STOP_ROUNDS <span class="tok-operator">=</span> <span class="tok-number">100</span>
+RUN_GRID_SEARCH   <span class="tok-operator">=</span> <span class="tok-keyword">False</span>      <span class="tok-comment"># True → full grid search, False → use best_params</span>
+N_FOLDS           <span class="tok-operator">=</span> <span class="tok-number">5</span>          <span class="tok-comment"># folds for hyper‑param search</span>
+FINAL_N_FOLDS     <span class="tok-operator">=</span> <span class="tok-number">10</span>         <span class="tok-comment"># folds for final model ensembling</span>
+SEED              <span class="tok-operator">=</span> <span class="tok-number">42</span>
+
+os<span class="tok-operator">.</span>makedirs<span class="tok-operator">(</span>SAVE_DIR<span class="tok-operator">,</span> exist_ok<span class="tok-operator">=</span><span class="tok-keyword">True</span><span class="tok-operator">)</span>
+FIG_DIR <span class="tok-operator">=</span> os<span class="tok-operator">.</span>path<span class="tok-operator">.</span>join<span class="tok-operator">(</span>SAVE_DIR<span class="tok-operator">,</span> <span class="tok-string">&quot;figs&quot;</span><span class="tok-operator">)</span>
+os<span class="tok-operator">.</span>makedirs<span class="tok-operator">(</span>FIG_DIR<span class="tok-operator">,</span> exist_ok<span class="tok-operator">=</span><span class="tok-keyword">True</span><span class="tok-operator">)</span>
+
+<span class="tok-comment"># ============================================================</span>
+<span class="tok-comment"># 1) hyper‑parameter grid   (true LightGBM names)</span>
+<span class="tok-comment">#    ― now includes &quot;num_leaves&quot; so that search space matches</span>
+<span class="tok-comment">#      the manual best‑param templates later in the script ―</span>
+<span class="tok-comment"># ============================================================</span>
+param_grid <span class="tok-operator">=</span> <span class="tok-operator">{</span>
+    <span class="tok-string">&quot;learning_rate&quot;</span><span class="tok-operator">:</span>    <span class="tok-operator">[</span><span class="tok-number">0.01</span><span class="tok-operator">,</span> <span class="tok-number">0.03</span><span class="tok-operator">]</span><span class="tok-operator">,</span>
+    <span class="tok-string">&quot;max_depth&quot;</span><span class="tok-operator">:</span>        <span class="tok-operator">[</span><span class="tok-number">6</span><span class="tok-operator">,</span> <span class="tok-number">8</span><span class="tok-operator">]</span><span class="tok-operator">,</span>
+    <span class="tok-string">&quot;num_leaves&quot;</span><span class="tok-operator">:</span>       <span class="tok-operator">[</span><span class="tok-number">63</span><span class="tok-operator">]</span><span class="tok-operator">,</span>
+    <span class="tok-string">&quot;bagging_fraction&quot;</span><span class="tok-operator">:</span> <span class="tok-operator">[</span><span class="tok-number">1.0</span><span class="tok-operator">]</span><span class="tok-operator">,</span>
+    <span class="tok-string">&quot;feature_fraction&quot;</span><span class="tok-operator">:</span> <span class="tok-operator">[</span><span class="tok-number">0.5</span><span class="tok-operator">]</span><span class="tok-operator">,</span>
+    <span class="tok-string">&quot;lambda_l2&quot;</span><span class="tok-operator">:</span>        <span class="tok-operator">[</span><span class="tok-number">1.0</span><span class="tok-operator">]</span><span class="tok-operator">,</span>
+<span class="tok-operator">}</span>
+
+<span class="tok-comment"># ============================================================</span>
+<span class="tok-comment"># 2) manual best params (one‑liner per target, true LGBM names)</span>
+<span class="tok-comment">#     – used when RUN_GRID_SEARCH=False –</span>
+<span class="tok-comment"># ============================================================</span>
+best_params <span class="tok-operator">=</span> <span class="tok-operator">{</span>
+    <span class="tok-string">&quot;Tg&quot;</span><span class="tok-operator">:</span>      <span class="tok-operator">{</span><span class="tok-string">&quot;objective&quot;</span><span class="tok-operator">:</span><span class="tok-string">&quot;regression&quot;</span><span class="tok-operator">,</span><span class="tok-string">&quot;metric&quot;</span><span class="tok-operator">:</span><span class="tok-string">&quot;mae&quot;</span><span class="tok-operator">,</span><span class="tok-string">&quot;device_type&quot;</span><span class="tok-operator">:</span><span class="tok-string">&quot;gpu&quot;</span><span class="tok-operator">,</span><span class="tok-string">&quot;learning_rate&quot;</span><span class="tok-operator">:</span><span class="tok-number">0.03</span><span class="tok-operator">,</span><span class="tok-string">&quot;max_depth&quot;</span><span class="tok-operator">:</span><span class="tok-number">8</span><span class="tok-operator">,</span><span class="tok-string">&quot;num_leaves&quot;</span><span class="tok-operator">:</span><span class="tok-number">63</span><span class="tok-operator">,</span><span class="tok-string">&quot;bagging_fraction&quot;</span><span class="tok-operator">:</span><span class="tok-number">0.5</span><span class="tok-operator">,</span><span class="tok-string">&quot;bagging_freq&quot;</span><span class="tok-operator">:</span><span class="tok-number">1</span><span class="tok-operator">,</span><span class="tok-string">&quot;feature_fraction&quot;</span><span class="tok-operator">:</span><span class="tok-number">0.5</span><span class="tok-operator">,</span><span class="tok-string">&quot;lambda_l2&quot;</span><span class="tok-operator">:</span><span class="tok-number">1.0</span><span class="tok-operator">,</span><span class="tok-string">&quot;seed&quot;</span><span class="tok-operator">:</span>SEED<span class="tok-operator">,</span><span class="tok-string">&quot;verbosity&quot;</span><span class="tok-operator">:</span><span class="tok-operator">-</span><span class="tok-number">1</span><span class="tok-operator">}</span><span class="tok-operator">,</span>
+    <span class="tok-string">&quot;FFV&quot;</span><span class="tok-operator">:</span>     <span class="tok-operator">{</span><span class="tok-string">&quot;objective&quot;</span><span class="tok-operator">:</span><span class="tok-string">&quot;regression&quot;</span><span class="tok-operator">,</span><span class="tok-string">&quot;metric&quot;</span><span class="tok-operator">:</span><span class="tok-string">&quot;mae&quot;</span><span class="tok-operator">,</span><span class="tok-string">&quot;device_type&quot;</span><span class="tok-operator">:</span><span class="tok-string">&quot;gpu&quot;</span><span class="tok-operator">,</span><span class="tok-string">&quot;learning_rate&quot;</span><span class="tok-operator">:</span><span class="tok-number">0.01</span><span class="tok-operator">,</span><span class="tok-string">&quot;max_depth&quot;</span><span class="tok-operator">:</span><span class="tok-number">6</span><span class="tok-operator">,</span><span class="tok-string">&quot;num_leaves&quot;</span><span class="tok-operator">:</span><span class="tok-number">63</span><span class="tok-operator">,</span><span class="tok-string">&quot;bagging_fraction&quot;</span><span class="tok-operator">:</span><span class="tok-number">1.0</span><span class="tok-operator">,</span><span class="tok-string">&quot;bagging_freq&quot;</span><span class="tok-operator">:</span><span class="tok-number">1</span><span class="tok-operator">,</span><span class="tok-string">&quot;feature_fraction&quot;</span><span class="tok-operator">:</span><span class="tok-number">0.5</span><span class="tok-operator">,</span><span class="tok-string">&quot;lambda_l2&quot;</span><span class="tok-operator">:</span><span class="tok-number">1.0</span><span class="tok-operator">,</span><span class="tok-string">&quot;seed&quot;</span><span class="tok-operator">:</span>SEED<span class="tok-operator">,</span><span class="tok-string">&quot;verbosity&quot;</span><span class="tok-operator">:</span><span class="tok-operator">-</span><span class="tok-number">1</span><span class="tok-operator">}</span><span class="tok-operator">,</span>
+    <span class="tok-string">&quot;Tc&quot;</span><span class="tok-operator">:</span>      <span class="tok-operator">{</span><span class="tok-string">&quot;objective&quot;</span><span class="tok-operator">:</span><span class="tok-string">&quot;regression&quot;</span><span class="tok-operator">,</span><span class="tok-string">&quot;metric&quot;</span><span class="tok-operator">:</span><span class="tok-string">&quot;mae&quot;</span><span class="tok-operator">,</span><span class="tok-string">&quot;device_type&quot;</span><span class="tok-operator">:</span><span class="tok-string">&quot;gpu&quot;</span><span class="tok-operator">,</span><span class="tok-string">&quot;learning_rate&quot;</span><span class="tok-operator">:</span><span class="tok-number">0.01</span><span class="tok-operator">,</span><span class="tok-string">&quot;max_depth&quot;</span><span class="tok-operator">:</span><span class="tok-number">8</span><span class="tok-operator">,</span><span class="tok-string">&quot;num_leaves&quot;</span><span class="tok-operator">:</span><span class="tok-number">63</span><span class="tok-operator">,</span><span class="tok-string">&quot;bagging_fraction&quot;</span><span class="tok-operator">:</span><span class="tok-number">0.5</span><span class="tok-operator">,</span><span class="tok-string">&quot;bagging_freq&quot;</span><span class="tok-operator">:</span><span class="tok-number">1</span><span class="tok-operator">,</span><span class="tok-string">&quot;feature_fraction&quot;</span><span class="tok-operator">:</span><span class="tok-number">0.5</span><span class="tok-operator">,</span><span class="tok-string">&quot;lambda_l2&quot;</span><span class="tok-operator">:</span><span class="tok-number">1.0</span><span class="tok-operator">,</span><span class="tok-string">&quot;seed&quot;</span><span class="tok-operator">:</span>SEED<span class="tok-operator">,</span><span class="tok-string">&quot;verbosity&quot;</span><span class="tok-operator">:</span><span class="tok-operator">-</span><span class="tok-number">1</span><span class="tok-operator">}</span><span class="tok-operator">,</span>
+    <span class="tok-string">&quot;Density&quot;</span><span class="tok-operator">:</span> <span class="tok-operator">{</span><span class="tok-string">&quot;objective&quot;</span><span class="tok-operator">:</span><span class="tok-string">&quot;regression&quot;</span><span class="tok-operator">,</span><span class="tok-string">&quot;metric&quot;</span><span class="tok-operator">:</span><span class="tok-string">&quot;mae&quot;</span><span class="tok-operator">,</span><span class="tok-string">&quot;device_type&quot;</span><span class="tok-operator">:</span><span class="tok-string">&quot;gpu&quot;</span><span class="tok-operator">,</span><span class="tok-string">&quot;learning_rate&quot;</span><span class="tok-operator">:</span><span class="tok-number">0.01</span><span class="tok-operator">,</span><span class="tok-string">&quot;max_depth&quot;</span><span class="tok-operator">:</span><span class="tok-number">6</span><span class="tok-operator">,</span><span class="tok-string">&quot;num_leaves&quot;</span><span class="tok-operator">:</span><span class="tok-number">63</span><span class="tok-operator">,</span><span class="tok-string">&quot;bagging_fraction&quot;</span><span class="tok-operator">:</span><span class="tok-number">1.0</span><span class="tok-operator">,</span><span class="tok-string">&quot;bagging_freq&quot;</span><span class="tok-operator">:</span><span class="tok-number">1</span><span class="tok-operator">,</span><span class="tok-string">&quot;feature_fraction&quot;</span><span class="tok-operator">:</span><span class="tok-number">0.5</span><span class="tok-operator">,</span><span class="tok-string">&quot;lambda_l2&quot;</span><span class="tok-operator">:</span><span class="tok-number">1.0</span><span class="tok-operator">,</span><span class="tok-string">&quot;seed&quot;</span><span class="tok-operator">:</span>SEED<span class="tok-operator">,</span><span class="tok-string">&quot;verbosity&quot;</span><span class="tok-operator">:</span><span class="tok-operator">-</span><span class="tok-number">1</span><span class="tok-operator">}</span><span class="tok-operator">,</span>
+    <span class="tok-string">&quot;Rg&quot;</span><span class="tok-operator">:</span>      <span class="tok-operator">{</span><span class="tok-string">&quot;objective&quot;</span><span class="tok-operator">:</span><span class="tok-string">&quot;regression&quot;</span><span class="tok-operator">,</span><span class="tok-string">&quot;metric&quot;</span><span class="tok-operator">:</span><span class="tok-string">&quot;mae&quot;</span><span class="tok-operator">,</span><span class="tok-string">&quot;device_type&quot;</span><span class="tok-operator">:</span><span class="tok-string">&quot;gpu&quot;</span><span class="tok-operator">,</span><span class="tok-string">&quot;learning_rate&quot;</span><span class="tok-operator">:</span><span class="tok-number">0.01</span><span class="tok-operator">,</span><span class="tok-string">&quot;max_depth&quot;</span><span class="tok-operator">:</span><span class="tok-number">6</span><span class="tok-operator">,</span><span class="tok-string">&quot;num_leaves&quot;</span><span class="tok-operator">:</span><span class="tok-number">63</span><span class="tok-operator">,</span><span class="tok-string">&quot;bagging_fraction&quot;</span><span class="tok-operator">:</span><span class="tok-number">1.0</span><span class="tok-operator">,</span><span class="tok-string">&quot;bagging_freq&quot;</span><span class="tok-operator">:</span><span class="tok-number">1</span><span class="tok-operator">,</span><span class="tok-string">&quot;feature_fraction&quot;</span><span class="tok-operator">:</span><span class="tok-number">0.5</span><span class="tok-operator">,</span><span class="tok-string">&quot;lambda_l2&quot;</span><span class="tok-operator">:</span><span class="tok-number">1.0</span><span class="tok-operator">,</span><span class="tok-string">&quot;seed&quot;</span><span class="tok-operator">:</span>SEED<span class="tok-operator">,</span><span class="tok-string">&quot;verbosity&quot;</span><span class="tok-operator">:</span><span class="tok-operator">-</span><span class="tok-number">1</span><span class="tok-operator">}</span><span class="tok-operator">,</span>
+<span class="tok-operator">}</span>
+
+<span class="tok-comment"># ============================================================</span>
+<span class="tok-comment"># 3) helper: K‑fold CV MAE</span>
+<span class="tok-comment"># ============================================================</span>
+cv_search <span class="tok-operator">=</span> KFold<span class="tok-operator">(</span>n_splits<span class="tok-operator">=</span>N_FOLDS<span class="tok-operator">,</span> shuffle<span class="tok-operator">=</span><span class="tok-keyword">True</span><span class="tok-operator">,</span> random_state<span class="tok-operator">=</span>SEED<span class="tok-operator">)</span>
+stop_cb <span class="tok-operator">=</span> <span class="tok-operator">[</span>lgb<span class="tok-operator">.</span>early_stopping<span class="tok-operator">(</span>EARLY_STOP_ROUNDS<span class="tok-operator">,</span> first_metric_only<span class="tok-operator">=</span><span class="tok-keyword">True</span><span class="tok-operator">,</span> verbose<span class="tok-operator">=</span><span class="tok-keyword">False</span><span class="tok-operator">)</span><span class="tok-operator">]</span>
+
+<span class="tok-keyword">def</span> cv_mae<span class="tok-operator">(</span>params<span class="tok-operator">,</span> X<span class="tok-operator">,</span> y<span class="tok-operator">)</span><span class="tok-operator">:</span>
+    <span class="tok-string">&quot;&quot;&quot;N‑fold MAE + mean best_iteration (for grid search)&quot;&quot;&quot;</span>
+    ms<span class="tok-operator">,</span> iters <span class="tok-operator">=</span> <span class="tok-operator">[</span><span class="tok-operator">]</span><span class="tok-operator">,</span> <span class="tok-operator">[</span><span class="tok-operator">]</span>
+
+    <span class="tok-keyword">for</span> tr<span class="tok-operator">,</span> va <span class="tok-keyword">in</span> cv_search<span class="tok-operator">.</span>split<span class="tok-operator">(</span>X<span class="tok-operator">)</span><span class="tok-operator">:</span>
+        dtrain <span class="tok-operator">=</span> lgb<span class="tok-operator">.</span>Dataset<span class="tok-operator">(</span>X<span class="tok-operator">[</span>tr<span class="tok-operator">]</span><span class="tok-operator">,</span> label<span class="tok-operator">=</span>y<span class="tok-operator">[</span>tr<span class="tok-operator">]</span><span class="tok-operator">)</span>
+        dvalid <span class="tok-operator">=</span> lgb<span class="tok-operator">.</span>Dataset<span class="tok-operator">(</span>X<span class="tok-operator">[</span>va<span class="tok-operator">]</span><span class="tok-operator">,</span> label<span class="tok-operator">=</span>y<span class="tok-operator">[</span>va<span class="tok-operator">]</span><span class="tok-operator">)</span>
+
+        booster <span class="tok-operator">=</span> lgb<span class="tok-operator">.</span>train<span class="tok-operator">(</span>
+            params<span class="tok-operator">,</span>
+            dtrain<span class="tok-operator">,</span>
+            num_boost_round<span class="tok-operator">=</span><span class="tok-number">100_000</span><span class="tok-operator">,</span>
+            valid_sets<span class="tok-operator">=</span><span class="tok-operator">[</span>dvalid<span class="tok-operator">]</span><span class="tok-operator">,</span>
+            callbacks<span class="tok-operator">=</span>stop_cb<span class="tok-operator">,</span>          <span class="tok-comment"># ← here</span>
+        <span class="tok-operator">)</span>
+        pred <span class="tok-operator">=</span> booster<span class="tok-operator">.</span>predict<span class="tok-operator">(</span>X<span class="tok-operator">[</span>va<span class="tok-operator">]</span><span class="tok-operator">,</span> num_iteration<span class="tok-operator">=</span>booster<span class="tok-operator">.</span>best_iteration<span class="tok-operator">)</span>
+        ms<span class="tok-operator">.</span>append<span class="tok-operator">(</span>mean_absolute_error<span class="tok-operator">(</span>y<span class="tok-operator">[</span>va<span class="tok-operator">]</span><span class="tok-operator">,</span> pred<span class="tok-operator">)</span><span class="tok-operator">)</span>
+        iters<span class="tok-operator">.</span>append<span class="tok-operator">(</span>booster<span class="tok-operator">.</span>best_iteration<span class="tok-operator">)</span>
+        <span class="tok-keyword">del</span> dtrain<span class="tok-operator">,</span> dvalid<span class="tok-operator">,</span> booster
+        gc<span class="tok-operator">.</span>collect<span class="tok-operator">(</span><span class="tok-operator">)</span>
+    <span class="tok-keyword">return</span> <span class="tok-builtin">float</span><span class="tok-operator">(</span>np<span class="tok-operator">.</span>mean<span class="tok-operator">(</span>ms<span class="tok-operator">)</span><span class="tok-operator">)</span><span class="tok-operator">,</span> <span class="tok-builtin">int</span><span class="tok-operator">(</span>np<span class="tok-operator">.</span>mean<span class="tok-operator">(</span>iters<span class="tok-operator">)</span><span class="tok-operator">)</span>
+
+<span class="tok-comment"># ============================================================</span>
+<span class="tok-comment"># 4) main loop  (grid search + 10‑fold model ensembling)</span>
+<span class="tok-comment"># ============================================================</span>
+plot_data        <span class="tok-operator">=</span> <span class="tok-operator">{</span>p<span class="tok-operator">:</span> <span class="tok-operator">{</span>t<span class="tok-operator">:</span> <span class="tok-operator">[</span><span class="tok-operator">]</span> <span class="tok-keyword">for</span> t <span class="tok-keyword">in</span> targets<span class="tok-operator">}</span> <span class="tok-keyword">for</span> p <span class="tok-keyword">in</span> param_grid<span class="tok-operator">}</span>
+model_paths      <span class="tok-operator">=</span> <span class="tok-operator">{</span><span class="tok-operator">}</span>
+chosen_param_set <span class="tok-operator">=</span> <span class="tok-operator">{</span><span class="tok-operator">}</span>
+fold_mae_dict    <span class="tok-operator">=</span> <span class="tok-operator">{</span>t<span class="tok-operator">:</span> <span class="tok-operator">[</span><span class="tok-operator">]</span> <span class="tok-keyword">for</span> t <span class="tok-keyword">in</span> targets<span class="tok-operator">}</span>
+
+<span class="tok-builtin">print</span><span class="tok-operator">(</span><span class="tok-string">&quot;Running LightGBM evaluation …\n&quot;</span><span class="tok-operator">)</span>
+
+<span class="tok-keyword">for</span> t_idx<span class="tok-operator">,</span> tgt <span class="tok-keyword">in</span> <span class="tok-builtin">enumerate</span><span class="tok-operator">(</span>targets<span class="tok-operator">)</span><span class="tok-operator">:</span>
+    X_tgt <span class="tok-operator">=</span> X_all_lgbm<span class="tok-operator">[</span>np<span class="tok-operator">.</span>isfinite<span class="tok-operator">(</span>Y_all<span class="tok-operator">[</span><span class="tok-operator">:</span><span class="tok-operator">,</span> t_idx<span class="tok-operator">]</span><span class="tok-operator">)</span><span class="tok-operator">]</span>
+    y_tgt <span class="tok-operator">=</span> Y_all<span class="tok-operator">[</span>np<span class="tok-operator">.</span>isfinite<span class="tok-operator">(</span>Y_all<span class="tok-operator">[</span><span class="tok-operator">:</span><span class="tok-operator">,</span> t_idx<span class="tok-operator">]</span><span class="tok-operator">)</span><span class="tok-operator">,</span> t_idx<span class="tok-operator">]</span>
+
+    <span class="tok-comment"># ---------- 4.1  hyper‑param search ---------- #</span>
+    <span class="tok-keyword">if</span> RUN_GRID_SEARCH<span class="tok-operator">:</span>
+        best_mae<span class="tok-operator">,</span> best_cfg<span class="tok-operator">,</span> best_iter <span class="tok-operator">=</span> <span class="tok-number">1e9</span><span class="tok-operator">,</span> <span class="tok-keyword">None</span><span class="tok-operator">,</span> <span class="tok-keyword">None</span>
+        <span class="tok-keyword">for</span> lr <span class="tok-keyword">in</span> param_grid<span class="tok-operator">[</span><span class="tok-string">&quot;learning_rate&quot;</span><span class="tok-operator">]</span><span class="tok-operator">:</span>
+            <span class="tok-keyword">for</span> md <span class="tok-keyword">in</span> param_grid<span class="tok-operator">[</span><span class="tok-string">&quot;max_depth&quot;</span><span class="tok-operator">]</span><span class="tok-operator">:</span>
+                <span class="tok-keyword">for</span> nl <span class="tok-keyword">in</span> param_grid<span class="tok-operator">[</span><span class="tok-string">&quot;num_leaves&quot;</span><span class="tok-operator">]</span><span class="tok-operator">:</span>  <span class="tok-comment"># NEW loop level</span>
+                    <span class="tok-keyword">for</span> bf <span class="tok-keyword">in</span> param_grid<span class="tok-operator">[</span><span class="tok-string">&quot;bagging_fraction&quot;</span><span class="tok-operator">]</span><span class="tok-operator">:</span>
+                        <span class="tok-keyword">for</span> ff <span class="tok-keyword">in</span> param_grid<span class="tok-operator">[</span><span class="tok-string">&quot;feature_fraction&quot;</span><span class="tok-operator">]</span><span class="tok-operator">:</span>
+                            <span class="tok-keyword">for</span> l2 <span class="tok-keyword">in</span> param_grid<span class="tok-operator">[</span><span class="tok-string">&quot;lambda_l2&quot;</span><span class="tok-operator">]</span><span class="tok-operator">:</span>
+                                p <span class="tok-operator">=</span> <span class="tok-operator">{</span>
+                                    <span class="tok-string">&quot;objective&quot;</span><span class="tok-operator">:</span>        <span class="tok-string">&quot;regression&quot;</span><span class="tok-operator">,</span>
+                                    <span class="tok-string">&quot;metric&quot;</span><span class="tok-operator">:</span>           <span class="tok-string">&quot;mae&quot;</span><span class="tok-operator">,</span>
+                                    <span class="tok-string">&quot;device_type&quot;</span><span class="tok-operator">:</span>      <span class="tok-string">&quot;cpu&quot;</span><span class="tok-operator">,</span>
+                                    <span class="tok-string">&quot;learning_rate&quot;</span><span class="tok-operator">:</span>    lr<span class="tok-operator">,</span>
+                                    <span class="tok-string">&quot;max_depth&quot;</span><span class="tok-operator">:</span>        md<span class="tok-operator">,</span>
+                                    <span class="tok-string">&quot;num_leaves&quot;</span><span class="tok-operator">:</span>       nl<span class="tok-operator">,</span>  <span class="tok-comment"># NEW ➜ added to param dict</span>
+                                    <span class="tok-string">&quot;bagging_fraction&quot;</span><span class="tok-operator">:</span> bf<span class="tok-operator">,</span>
+                                    <span class="tok-string">&quot;bagging_freq&quot;</span><span class="tok-operator">:</span>     <span class="tok-number">1</span><span class="tok-operator">,</span>
+                                    <span class="tok-string">&quot;feature_fraction&quot;</span><span class="tok-operator">:</span> ff<span class="tok-operator">,</span>
+                                    <span class="tok-string">&quot;lambda_l2&quot;</span><span class="tok-operator">:</span>        l2<span class="tok-operator">,</span>
+                                    <span class="tok-string">&quot;seed&quot;</span><span class="tok-operator">:</span>             SEED<span class="tok-operator">,</span>
+                                    <span class="tok-string">&quot;verbosity&quot;</span><span class="tok-operator">:</span>        <span class="tok-operator">-</span><span class="tok-number">1</span><span class="tok-operator">,</span>
+                                <span class="tok-operator">}</span>
+
+                                mae<span class="tok-operator">,</span> it_ <span class="tok-operator">=</span> cv_mae<span class="tok-operator">(</span>p<span class="tok-operator">,</span> X_tgt<span class="tok-operator">,</span> y_tgt<span class="tok-operator">)</span>
+
+                                <span class="tok-comment"># collect diagnostic plot points</span>
+                                plot_data<span class="tok-operator">[</span><span class="tok-string">&quot;learning_rate&quot;</span><span class="tok-operator">]</span><span class="tok-operator">[</span>tgt<span class="tok-operator">]</span><span class="tok-operator">.</span>append<span class="tok-operator">(</span><span class="tok-operator">(</span>lr<span class="tok-operator">,</span> mae<span class="tok-operator">)</span><span class="tok-operator">)</span>
+                                plot_data<span class="tok-operator">[</span><span class="tok-string">&quot;max_depth&quot;</span><span class="tok-operator">]</span><span class="tok-operator">[</span>tgt<span class="tok-operator">]</span><span class="tok-operator">.</span>append<span class="tok-operator">(</span><span class="tok-operator">(</span>md<span class="tok-operator">,</span> mae<span class="tok-operator">)</span><span class="tok-operator">)</span>
+                                plot_data<span class="tok-operator">[</span><span class="tok-string">&quot;num_leaves&quot;</span><span class="tok-operator">]</span><span class="tok-operator">[</span>tgt<span class="tok-operator">]</span><span class="tok-operator">.</span>append<span class="tok-operator">(</span><span class="tok-operator">(</span>nl<span class="tok-operator">,</span> mae<span class="tok-operator">)</span><span class="tok-operator">)</span>  <span class="tok-comment"># NEW ➜ record</span>
+                                plot_data<span class="tok-operator">[</span><span class="tok-string">&quot;bagging_fraction&quot;</span><span class="tok-operator">]</span><span class="tok-operator">[</span>tgt<span class="tok-operator">]</span><span class="tok-operator">.</span>append<span class="tok-operator">(</span><span class="tok-operator">(</span>bf<span class="tok-operator">,</span> mae<span class="tok-operator">)</span><span class="tok-operator">)</span>
+                                plot_data<span class="tok-operator">[</span><span class="tok-string">&quot;feature_fraction&quot;</span><span class="tok-operator">]</span><span class="tok-operator">[</span>tgt<span class="tok-operator">]</span><span class="tok-operator">.</span>append<span class="tok-operator">(</span><span class="tok-operator">(</span>ff<span class="tok-operator">,</span> mae<span class="tok-operator">)</span><span class="tok-operator">)</span>
+                                plot_data<span class="tok-operator">[</span><span class="tok-string">&quot;lambda_l2&quot;</span><span class="tok-operator">]</span><span class="tok-operator">[</span>tgt<span class="tok-operator">]</span><span class="tok-operator">.</span>append<span class="tok-operator">(</span><span class="tok-operator">(</span>l2<span class="tok-operator">,</span> mae<span class="tok-operator">)</span><span class="tok-operator">)</span>
+
+                                <span class="tok-keyword">if</span> mae <span class="tok-operator">&lt;</span> best_mae<span class="tok-operator">:</span>
+                                    best_mae<span class="tok-operator">,</span> best_cfg<span class="tok-operator">,</span> best_iter <span class="tok-operator">=</span> mae<span class="tok-operator">,</span> p<span class="tok-operator">.</span>copy<span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">,</span> it_
+        <span class="tok-builtin">print</span><span class="tok-operator">(</span><span class="tok-string">f&quot;◎ {tgt}  best grid params = {best_cfg} | &quot;</span>
+              <span class="tok-string">f&quot;best_iteration ≈ {best_iter} | CV MAE = {best_mae:.5f}&quot;</span><span class="tok-operator">)</span>
+        chosen_params <span class="tok-operator">=</span> best_cfg
+    <span class="tok-keyword">else</span><span class="tok-operator">:</span>
+        chosen_params <span class="tok-operator">=</span> best_params<span class="tok-operator">[</span>tgt<span class="tok-operator">]</span>
+        best_mae<span class="tok-operator">,</span> _ <span class="tok-operator">=</span> cv_mae<span class="tok-operator">(</span>chosen_params<span class="tok-operator">,</span> X_tgt<span class="tok-operator">,</span> y_tgt<span class="tok-operator">)</span>
+        <span class="tok-comment"># record a single point for diagnostic plots, keeping grid/dataframe shape intact</span>
+        <span class="tok-keyword">for</span> pname <span class="tok-keyword">in</span> plot_data<span class="tok-operator">:</span>
+            plot_data<span class="tok-operator">[</span>pname<span class="tok-operator">]</span><span class="tok-operator">[</span>tgt<span class="tok-operator">]</span><span class="tok-operator">.</span>append<span class="tok-operator">(</span><span class="tok-operator">(</span>chosen_params<span class="tok-operator">[</span>pname<span class="tok-operator">]</span><span class="tok-operator">,</span> best_mae<span class="tok-operator">)</span><span class="tok-operator">)</span>
+
+    chosen_param_set<span class="tok-operator">[</span>tgt<span class="tok-operator">]</span> <span class="tok-operator">=</span> chosen_params
+
+    <span class="tok-comment"># ---------- 4.2  final 10‑fold training &amp; saving ---------- #</span>
+    cv_final <span class="tok-operator">=</span> KFold<span class="tok-operator">(</span>n_splits<span class="tok-operator">=</span>FINAL_N_FOLDS<span class="tok-operator">,</span> shuffle<span class="tok-operator">=</span><span class="tok-keyword">True</span><span class="tok-operator">,</span> random_state<span class="tok-operator">=</span>SEED<span class="tok-operator">)</span>
+    fold_maes<span class="tok-operator">,</span> paths <span class="tok-operator">=</span> <span class="tok-operator">[</span><span class="tok-operator">]</span><span class="tok-operator">,</span> <span class="tok-operator">[</span><span class="tok-operator">]</span>
+
+    <span class="tok-keyword">for</span> f_id<span class="tok-operator">,</span> <span class="tok-operator">(</span>tr<span class="tok-operator">,</span> va<span class="tok-operator">)</span> <span class="tok-keyword">in</span> <span class="tok-builtin">enumerate</span><span class="tok-operator">(</span>cv_final<span class="tok-operator">.</span>split<span class="tok-operator">(</span>X_tgt<span class="tok-operator">)</span><span class="tok-operator">)</span><span class="tok-operator">:</span>
+        dtrain <span class="tok-operator">=</span> lgb<span class="tok-operator">.</span>Dataset<span class="tok-operator">(</span>X_tgt<span class="tok-operator">[</span>tr<span class="tok-operator">]</span><span class="tok-operator">,</span> label<span class="tok-operator">=</span>y_tgt<span class="tok-operator">[</span>tr<span class="tok-operator">]</span><span class="tok-operator">)</span>
+        dvalid <span class="tok-operator">=</span> lgb<span class="tok-operator">.</span>Dataset<span class="tok-operator">(</span>X_tgt<span class="tok-operator">[</span>va<span class="tok-operator">]</span><span class="tok-operator">,</span> label<span class="tok-operator">=</span>y_tgt<span class="tok-operator">[</span>va<span class="tok-operator">]</span><span class="tok-operator">)</span>
+
+        booster <span class="tok-operator">=</span> lgb<span class="tok-operator">.</span>train<span class="tok-operator">(</span>
+            chosen_params<span class="tok-operator">,</span>
+            dtrain<span class="tok-operator">,</span>
+            num_boost_round<span class="tok-operator">=</span><span class="tok-number">100_000</span><span class="tok-operator">,</span>
+            valid_sets<span class="tok-operator">=</span><span class="tok-operator">[</span>dvalid<span class="tok-operator">]</span><span class="tok-operator">,</span>
+            callbacks<span class="tok-operator">=</span>stop_cb<span class="tok-operator">,</span>
+        <span class="tok-operator">)</span>
+        preds <span class="tok-operator">=</span> booster<span class="tok-operator">.</span>predict<span class="tok-operator">(</span>X_tgt<span class="tok-operator">[</span>va<span class="tok-operator">]</span><span class="tok-operator">,</span> num_iteration<span class="tok-operator">=</span>booster<span class="tok-operator">.</span>best_iteration<span class="tok-operator">)</span>
+        mae_fold <span class="tok-operator">=</span> mean_absolute_error<span class="tok-operator">(</span>y_tgt<span class="tok-operator">[</span>va<span class="tok-operator">]</span><span class="tok-operator">,</span> preds<span class="tok-operator">)</span>
+        fold_maes<span class="tok-operator">.</span>append<span class="tok-operator">(</span>mae_fold<span class="tok-operator">)</span>
+        fold_mae_dict<span class="tok-operator">[</span>tgt<span class="tok-operator">]</span><span class="tok-operator">.</span>append<span class="tok-operator">(</span>mae_fold<span class="tok-operator">)</span>
+
+        model_path <span class="tok-operator">=</span> os<span class="tok-operator">.</span>path<span class="tok-operator">.</span>join<span class="tok-operator">(</span>SAVE_DIR<span class="tok-operator">,</span> <span class="tok-string">f&quot;lgb_{tgt}_fold{f_id}.txt&quot;</span><span class="tok-operator">)</span>
+        booster<span class="tok-operator">.</span>save_model<span class="tok-operator">(</span>model_path<span class="tok-operator">)</span>
+        paths<span class="tok-operator">.</span>append<span class="tok-operator">(</span>model_path<span class="tok-operator">)</span>
+
+        <span class="tok-keyword">del</span> dtrain<span class="tok-operator">,</span> dvalid<span class="tok-operator">,</span> booster
+        gc<span class="tok-operator">.</span>collect<span class="tok-operator">(</span><span class="tok-operator">)</span>
+
+    model_paths<span class="tok-operator">[</span>tgt<span class="tok-operator">]</span> <span class="tok-operator">=</span> paths<span class="tok-operator">.</span>copy<span class="tok-operator">(</span><span class="tok-operator">)</span>
+
+    <span class="tok-builtin">print</span><span class="tok-operator">(</span>
+        <span class="tok-string">f&quot;★ {tgt}: Fold MAEs = {[f&#x27;{m:.5f}&#x27; for m in fold_maes]} | &quot;</span>
+        <span class="tok-string">f&quot;Mean = {np.mean(fold_maes):.5f} (best grid MAE {best_mae:.5f})&quot;</span>
+    <span class="tok-operator">)</span>
+
+<span class="tok-comment"># ============================================================</span>
+<span class="tok-comment"># 5) diagnostic plots  (from grid search)</span>
+<span class="tok-comment"># ============================================================</span>
+color_map <span class="tok-operator">=</span> <span class="tok-operator">{</span>t<span class="tok-operator">:</span> c <span class="tok-keyword">for</span> t<span class="tok-operator">,</span> c <span class="tok-keyword">in</span> <span class="tok-builtin">zip</span><span class="tok-operator">(</span>
+    targets<span class="tok-operator">,</span> plt<span class="tok-operator">.</span>rcParams<span class="tok-operator">[</span><span class="tok-string">&quot;axes.prop_cycle&quot;</span><span class="tok-operator">]</span><span class="tok-operator">.</span>by_key<span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">[</span><span class="tok-string">&quot;color&quot;</span><span class="tok-operator">]</span>
+<span class="tok-operator">)</span><span class="tok-operator">}</span>
+
+<span class="tok-keyword">for</span> pname<span class="tok-operator">,</span> tgt_dict <span class="tok-keyword">in</span> plot_data<span class="tok-operator">.</span>items<span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">:</span>          <span class="tok-comment"># 6 parameters (incl. num_leaves)</span>
+    <span class="tok-keyword">for</span> tgt <span class="tok-keyword">in</span> targets<span class="tok-operator">:</span>                            <span class="tok-comment"># 5 targets</span>
+        pts <span class="tok-operator">=</span> tgt_dict<span class="tok-operator">[</span>tgt<span class="tok-operator">]</span>
+        <span class="tok-keyword">if</span> <span class="tok-keyword">not</span> pts<span class="tok-operator">:</span>
+            <span class="tok-keyword">continue</span>
+        xs<span class="tok-operator">,</span> ys <span class="tok-operator">=</span> <span class="tok-builtin">zip</span><span class="tok-operator">(</span><span class="tok-operator">*</span><span class="tok-builtin">sorted</span><span class="tok-operator">(</span>pts<span class="tok-operator">,</span> key<span class="tok-operator">=</span><span class="tok-keyword">lambda</span> v<span class="tok-operator">:</span> v<span class="tok-operator">[</span><span class="tok-number">0</span><span class="tok-operator">]</span><span class="tok-operator">)</span><span class="tok-operator">)</span>
+        plt<span class="tok-operator">.</span>figure<span class="tok-operator">(</span><span class="tok-operator">)</span>
+        plt<span class="tok-operator">.</span>plot<span class="tok-operator">(</span>xs<span class="tok-operator">,</span> ys<span class="tok-operator">,</span> <span class="tok-string">&quot;-o&quot;</span><span class="tok-operator">,</span> color<span class="tok-operator">=</span>color_map<span class="tok-operator">[</span>tgt<span class="tok-operator">]</span><span class="tok-operator">)</span>
+        plt<span class="tok-operator">.</span>xlabel<span class="tok-operator">(</span>pname<span class="tok-operator">)</span>
+        plt<span class="tok-operator">.</span>ylabel<span class="tok-operator">(</span><span class="tok-string">&quot;Mean CV MAE&quot;</span><span class="tok-operator">)</span>
+        plt<span class="tok-operator">.</span>title<span class="tok-operator">(</span><span class="tok-string">f&quot;{tgt} – {pname} vs MAE&quot;</span><span class="tok-operator">)</span>
+        plt<span class="tok-operator">.</span>grid<span class="tok-operator">(</span><span class="tok-keyword">True</span><span class="tok-operator">)</span>
+        plt<span class="tok-operator">.</span>savefig<span class="tok-operator">(</span>os<span class="tok-operator">.</span>path<span class="tok-operator">.</span>join<span class="tok-operator">(</span>FIG_DIR<span class="tok-operator">,</span> <span class="tok-string">f&quot;{pname}_{tgt}.png&quot;</span><span class="tok-operator">)</span><span class="tok-operator">,</span> dpi<span class="tok-operator">=</span><span class="tok-number">120</span><span class="tok-operator">)</span>
+        plt<span class="tok-operator">.</span>close<span class="tok-operator">(</span><span class="tok-operator">)</span></code></pre></section><section class="code-pane" id="code-pane-5" role="tabpanel" aria-labelledby="tab-5" hidden>
+<div class="code-meta"><span>Evaluation · Original notebook cells</span><span>49 lines</span><span>Cells 23, 27</span></div>
+<pre class="source"><code data-source-file="Evaluation" data-sha256="5b3aa0e2b8fd1a96e2ee54b709629dc779a34dc74a57e0de767d04b17c24761a"><span class="tok-comment"># Notebook code cell 23</span>
+<span class="tok-string">&#x27;&#x27;&#x27;# ============================================================
+# compute 10-fold validation wMAE (self-check only)
+# ============================================================
+K = len(targets)
+
+# 7.1  task-specific weights w_i
+n_i   = {t: train_df[t].notnull().sum()                  for t in targets}
+r_i   = {t: train_df[t].max() - train_df[t].min()        for t in targets}
+norm  = sum(1/np.sqrt(n_i[t]) for t in targets)          # Σ_j √(1/n_j)
+
+w_i = {
+    t: (1 / r_i[t]) * (K * (1/np.sqrt(n_i[t])) / norm)
+    for t in targets
+}
+
+# 7.2  fold-level weighted MAE
+wmae_folds = []
+for k in range(FINAL_N_FOLDS):
+    wmae_k = sum(w_i[t] * fold_mae_dict[t][k] for t in targets) / K
+    wmae_folds.append(wmae_k)
+
+print(&quot;XGB: 10-fold wMAE per fold:&quot;, [f&quot;{v:.5f}&quot; for v in wmae_folds])
+print(&quot;XGB: Mean 10-fold wMAE:&quot;, np.mean(wmae_folds))&#x27;&#x27;&#x27;</span>
+
+<span class="tok-comment"># Notebook code cell 27</span>
+<span class="tok-comment"># ============================================================</span>
+<span class="tok-comment"># compute 10-fold validation wMAE (self-check only)</span>
+<span class="tok-comment"># ============================================================</span>
+K <span class="tok-operator">=</span> <span class="tok-builtin">len</span><span class="tok-operator">(</span>targets<span class="tok-operator">)</span>
+
+<span class="tok-comment"># 7.1  task-specific weights w_i</span>
+n_i   <span class="tok-operator">=</span> <span class="tok-operator">{</span>t<span class="tok-operator">:</span> train_df<span class="tok-operator">[</span>t<span class="tok-operator">]</span><span class="tok-operator">.</span>notnull<span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">.</span><span class="tok-builtin">sum</span><span class="tok-operator">(</span><span class="tok-operator">)</span>                  <span class="tok-keyword">for</span> t <span class="tok-keyword">in</span> targets<span class="tok-operator">}</span>
+r_i   <span class="tok-operator">=</span> <span class="tok-operator">{</span>t<span class="tok-operator">:</span> train_df<span class="tok-operator">[</span>t<span class="tok-operator">]</span><span class="tok-operator">.</span><span class="tok-builtin">max</span><span class="tok-operator">(</span><span class="tok-operator">)</span> <span class="tok-operator">-</span> train_df<span class="tok-operator">[</span>t<span class="tok-operator">]</span><span class="tok-operator">.</span><span class="tok-builtin">min</span><span class="tok-operator">(</span><span class="tok-operator">)</span>        <span class="tok-keyword">for</span> t <span class="tok-keyword">in</span> targets<span class="tok-operator">}</span>
+norm  <span class="tok-operator">=</span> <span class="tok-builtin">sum</span><span class="tok-operator">(</span><span class="tok-number">1</span><span class="tok-operator">/</span>np<span class="tok-operator">.</span>sqrt<span class="tok-operator">(</span>n_i<span class="tok-operator">[</span>t<span class="tok-operator">]</span><span class="tok-operator">)</span> <span class="tok-keyword">for</span> t <span class="tok-keyword">in</span> targets<span class="tok-operator">)</span>          <span class="tok-comment"># Σ_j √(1/n_j)</span>
+
+w_i <span class="tok-operator">=</span> <span class="tok-operator">{</span>
+    t<span class="tok-operator">:</span> <span class="tok-operator">(</span><span class="tok-number">1</span> <span class="tok-operator">/</span> r_i<span class="tok-operator">[</span>t<span class="tok-operator">]</span><span class="tok-operator">)</span> <span class="tok-operator">*</span> <span class="tok-operator">(</span>K <span class="tok-operator">*</span> <span class="tok-operator">(</span><span class="tok-number">1</span><span class="tok-operator">/</span>np<span class="tok-operator">.</span>sqrt<span class="tok-operator">(</span>n_i<span class="tok-operator">[</span>t<span class="tok-operator">]</span><span class="tok-operator">)</span><span class="tok-operator">)</span> <span class="tok-operator">/</span> norm<span class="tok-operator">)</span>
+    <span class="tok-keyword">for</span> t <span class="tok-keyword">in</span> targets
+<span class="tok-operator">}</span>
+
+<span class="tok-comment"># 7.2  fold-level weighted MAE</span>
+wmae_folds <span class="tok-operator">=</span> <span class="tok-operator">[</span><span class="tok-operator">]</span>
+<span class="tok-keyword">for</span> k <span class="tok-keyword">in</span> <span class="tok-builtin">range</span><span class="tok-operator">(</span>FINAL_N_FOLDS<span class="tok-operator">)</span><span class="tok-operator">:</span>
+    wmae_k <span class="tok-operator">=</span> <span class="tok-builtin">sum</span><span class="tok-operator">(</span>w_i<span class="tok-operator">[</span>t<span class="tok-operator">]</span> <span class="tok-operator">*</span> fold_mae_dict<span class="tok-operator">[</span>t<span class="tok-operator">]</span><span class="tok-operator">[</span>k<span class="tok-operator">]</span> <span class="tok-keyword">for</span> t <span class="tok-keyword">in</span> targets<span class="tok-operator">)</span> <span class="tok-operator">/</span> K
+    wmae_folds<span class="tok-operator">.</span>append<span class="tok-operator">(</span>wmae_k<span class="tok-operator">)</span>
+
+<span class="tok-builtin">print</span><span class="tok-operator">(</span><span class="tok-string">&quot;LGB: 10‑fold wMAE per fold:&quot;</span><span class="tok-operator">,</span> <span class="tok-operator">[</span><span class="tok-string">f&quot;{v:.5f}&quot;</span> <span class="tok-keyword">for</span> v <span class="tok-keyword">in</span> wmae_folds<span class="tok-operator">]</span><span class="tok-operator">)</span>
+<span class="tok-builtin">print</span><span class="tok-operator">(</span><span class="tok-string">&quot;LGB: Mean 10‑fold wMAE:&quot;</span><span class="tok-operator">,</span> np<span class="tok-operator">.</span>mean<span class="tok-operator">(</span>wmae_folds<span class="tok-operator">)</span><span class="tok-operator">)</span></code></pre></section><section class="code-pane" id="code-pane-6" role="tabpanel" aria-labelledby="tab-6" hidden>
+<div class="code-meta"><span>Submission · Original notebook cells</span><span>32 lines</span><span>Cells 30, 32</span></div>
+<pre class="source"><code data-source-file="Submission" data-sha256="e1e4d0b326e3dcfbbbaffd7d6152cc4e45e3591cf4b6501bbb930f946318c52f"><span class="tok-comment"># Notebook code cell 30</span>
+<span class="tok-string">&#x27;&#x27;&#x27;print(&quot;\nBuilding submission…\n&quot;)
+dtest = xgb.DMatrix(X_test_xgb, missing=np.nan)
+submission = pd.DataFrame({&quot;id&quot;: test_ids_xgb})
+for tgt in targets:
+    preds_ensemble = []
+    for mpath in model_paths[tgt]:
+        booster = xgb.Booster(); booster.load_model(mpath)
+        preds_ensemble.append(booster.predict(dtest))
+    submission[tgt] = np.mean(preds_ensemble, axis=0)
+    print(f&quot;{tgt} preview:\n&quot;, submission[[&quot;id&quot;, tgt]].head(3), &quot;\n&quot;)
+
+out_path = os.path.join(SAVE_DIR, &quot;submission.csv&quot;)
+submission.to_csv(out_path, index=False)
+print(f&quot;Submission written to {out_path}&quot;)&#x27;&#x27;&#x27;</span>
+
+<span class="tok-comment"># Notebook code cell 32</span>
+<span class="tok-builtin">print</span><span class="tok-operator">(</span><span class="tok-string">&quot;\nBuilding submission …\n&quot;</span><span class="tok-operator">)</span>
+submission <span class="tok-operator">=</span> pd<span class="tok-operator">.</span>DataFrame<span class="tok-operator">(</span><span class="tok-operator">{</span><span class="tok-string">&quot;id&quot;</span><span class="tok-operator">:</span> test_ids_lgbm<span class="tok-operator">}</span><span class="tok-operator">)</span>
+<span class="tok-keyword">for</span> tgt <span class="tok-keyword">in</span> targets<span class="tok-operator">:</span>
+    preds_ens <span class="tok-operator">=</span> <span class="tok-operator">[</span><span class="tok-operator">]</span>
+    <span class="tok-keyword">for</span> pth <span class="tok-keyword">in</span> model_paths<span class="tok-operator">[</span>tgt<span class="tok-operator">]</span><span class="tok-operator">:</span>
+        booster <span class="tok-operator">=</span> lgb<span class="tok-operator">.</span>Booster<span class="tok-operator">(</span>model_file<span class="tok-operator">=</span>pth<span class="tok-operator">)</span>
+        preds_ens<span class="tok-operator">.</span>append<span class="tok-operator">(</span>
+            booster<span class="tok-operator">.</span>predict<span class="tok-operator">(</span>X_test_lgbm<span class="tok-operator">,</span> num_iteration<span class="tok-operator">=</span>booster<span class="tok-operator">.</span>best_iteration<span class="tok-operator">)</span>
+        <span class="tok-operator">)</span>
+    submission<span class="tok-operator">[</span>tgt<span class="tok-operator">]</span> <span class="tok-operator">=</span> np<span class="tok-operator">.</span>mean<span class="tok-operator">(</span>preds_ens<span class="tok-operator">,</span> axis<span class="tok-operator">=</span><span class="tok-number">0</span><span class="tok-operator">)</span>
+    <span class="tok-builtin">print</span><span class="tok-operator">(</span><span class="tok-string">f&quot;{tgt} preview:\n&quot;</span><span class="tok-operator">,</span> submission<span class="tok-operator">[</span><span class="tok-operator">[</span><span class="tok-string">&#x27;id&#x27;</span><span class="tok-operator">,</span> tgt<span class="tok-operator">]</span><span class="tok-operator">]</span><span class="tok-operator">.</span>head<span class="tok-operator">(</span><span class="tok-number">3</span><span class="tok-operator">)</span><span class="tok-operator">,</span> <span class="tok-string">&quot;\n&quot;</span><span class="tok-operator">)</span>
+
+out_path <span class="tok-operator">=</span> os<span class="tok-operator">.</span>path<span class="tok-operator">.</span>join<span class="tok-operator">(</span>SAVE_DIR<span class="tok-operator">,</span> <span class="tok-string">&quot;submission.csv&quot;</span><span class="tok-operator">)</span>
+submission<span class="tok-operator">.</span>to_csv<span class="tok-operator">(</span>out_path<span class="tok-operator">,</span> index<span class="tok-operator">=</span><span class="tok-keyword">False</span><span class="tok-operator">)</span>
+<span class="tok-builtin">print</span><span class="tok-operator">(</span><span class="tok-string">f&quot;✅  Submission written to {out_path}&quot;</span><span class="tok-operator">)</span>
+</code></pre></section></div></section></main>
+<script>
+(() => {
+  const tabs = Array.from(document.querySelectorAll('.tab'));
+  const panes = Array.from(document.querySelectorAll('.code-pane'));
+  const copyButton = document.querySelector('.copy-button');
+
+  function activate(tab) {
+    const target = tab.dataset.target;
+    tabs.forEach((item) => {
+      const active = item === tab;
+      item.classList.toggle('is-active', active);
+      item.setAttribute('aria-selected', String(active));
+      item.tabIndex = active ? 0 : -1;
+    });
+    panes.forEach((pane) => {
+      const active = pane.id === target;
+      pane.hidden = !active;
+      pane.classList.toggle('is-active', active);
+      if (active) pane.scrollTo({ top: 0, left: 0 });
+    });
+    copyButton.textContent = 'Copy code';
+  }
+
+  tabs.forEach((tab, index) => {
+    tab.addEventListener('click', () => activate(tab));
+    tab.addEventListener('keydown', (event) => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      let next = index;
+      if (event.key === 'ArrowLeft') next = (index - 1 + tabs.length) % tabs.length;
+      if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
+      if (event.key === 'Home') next = 0;
+      if (event.key === 'End') next = tabs.length - 1;
+      tabs[next].focus();
+      tabs[next].scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      activate(tabs[next]);
+    });
+  });
+
+  async function copyActiveCode() {
+    const code = document.querySelector('.code-pane:not([hidden]) code');
+    if (!code) return;
+    const text = code.textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (_) {
+      const area = document.createElement('textarea');
+      area.value = text;
+      area.style.position = 'fixed';
+      area.style.opacity = '0';
+      document.body.appendChild(area);
+      area.select();
+      document.execCommand('copy');
+      area.remove();
+    }
+    copyButton.textContent = 'Copied';
+    window.setTimeout(() => { copyButton.textContent = 'Copy code'; }, 1600);
+  }
+
+  copyButton.addEventListener('click', copyActiveCode);
+  tabs.forEach((tab, index) => { tab.tabIndex = index === 0 ? 0 : -1; });
+})();
+</script></body></html>

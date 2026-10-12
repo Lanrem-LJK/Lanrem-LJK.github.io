@@ -34,7 +34,7 @@
     .project-content h3 { margin: 0 0 10px; font-size: 1.25rem; color: #1e3a8a; }
     .project-content h3 a { color: inherit;text-decoration: none;pointer-events: none;cursor: default; }
     .project-content h3 a:hover { text-decoration: underline; }
-    .project-buttons { margin-top: 12px; }
+    .project-buttons { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
     .btn { display: inline-block; padding: 6px 14px; background: #2563eb; color: #fff; border-radius: 4px; font-size: .9rem; font-weight: 600; text-decoration: none; transition: background .2s; }
     .btn:hover { background: #1d4ed8; }
     .collab-logos { max-width: 900px; margin: 30px auto; padding: 20px 0; text-align: center; }
@@ -85,6 +85,8 @@
         <p><strong>Jingkai LAN</strong>, Giulia Peteani, Thomas Lemmin</p>
         <p>Metalloprotein annotations in major databases such as PDB and UniProt remain incomplete due to the high cost of experimental validation and manual curation. To address this, we developed sequence-only deep learning and machine learning models to predict metal-binding proteins and infer their enzymatic capability, and constructed a specialized metalloprotein database by integrating curated resources with in silico mutagenesis and rigorous quality control using structure prediction tools. Our models require only protein sequence information to operate, while achieving performance comparable to state-of-the-art approaches that rely on structural features or extensive feature engineering.</p>
         <div class="project-buttons">
+          <a class="btn" href="Document/Projects/metal-binding/Project_Description.html">Project Description</a>
+          <a class="btn" href="Document/Projects/metal-binding/Code_Sample_Jingkai_LAN.html">Code Sample</a>
           <a class="btn" href="Document/Slides/Metal_binding_site_prediction_of_Metalloprotein.pdf" target="_blank">Slides</a>
           <a class="btn" href="Document/Paper/Jingkai_thesis.pdf" target="_blank">Report</a>
         </div>

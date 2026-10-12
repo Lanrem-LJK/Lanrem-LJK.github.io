@@ -1,0 +1,1057 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Machine learning code sample by Jingkai LAN: ProtBERT embeddings and class-weighted multiclass XGBoost.">
+<title>Machine Learning Code Sample | Jingkai LAN</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --paper: #0d1117;
+    --ink: #e6edf3;
+    --muted: #8b949e;
+    --rule: #30363d;
+    --soft: #161b22;
+    --editor: #090b0f;
+    --editor-raised: #10141b;
+    --editor-rule: #252b35;
+    --code: #f8f8f2;
+    --comment: #7f8ea3;
+    --keyword: #ff79c6;
+    --string: #f1fa8c;
+    --number: #bd93f9;
+    --builtin: #8be9fd;
+    --definition: #50fa7b;
+    --constant: #ffb86c;
+    --operator: #ff79c6;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    overflow: hidden;
+    color: var(--ink);
+    background: var(--paper);
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font: inherit; }
+  .topbar {
+    height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 0 22px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--paper);
+  }
+  .identity { display: flex; align-items: baseline; gap: 13px; min-width: 0; }
+  .identity h1 { margin: 0; font-size: 16px; line-height: 1; letter-spacing: .01em; }
+  .identity p { margin: 0; color: var(--muted); font-size: 12px; }
+  .author { color: #c9d1d9; font-size: 12px; font-weight: 600; letter-spacing: .03em; white-space: nowrap; }
+  .workspace {
+    height: calc(100vh - 58px);
+    display: grid;
+    grid-template-columns: minmax(360px, 42%) minmax(0, 58%);
+  }
+  .readme-panel {
+    min-width: 0;
+    overflow-y: auto;
+    background: var(--paper);
+    border-right: 1px solid var(--rule);
+    scrollbar-color: #3b434f var(--paper);
+  }
+  .panel-label {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    border-bottom: 1px solid var(--rule);
+    background: rgba(13, 17, 23, .96);
+    color: #9da7b3;
+    font: 600 11px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    letter-spacing: .04em;
+    backdrop-filter: blur(8px);
+  }
+  .readme { max-width: 780px; margin: 0 auto; padding: 30px 34px 68px; font-size: 14px; line-height: 1.62; }
+  .readme h1 { margin: 0 0 20px; font-size: clamp(25px, 2.2vw, 34px); line-height: 1.18; letter-spacing: -.025em; }
+  .readme h2 { margin: 34px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--rule); font-size: 19px; line-height: 1.3; }
+  .readme h3 { margin: 25px 0 8px; font-size: 15px; line-height: 1.35; }
+  .readme p { margin: 0 0 14px; }
+  .readme ul, .readme ol { margin: 8px 0 16px 23px; padding: 0; }
+  .readme li { margin: 5px 0; padding-left: 2px; }
+  .readme code {
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: var(--soft);
+    color: var(--ink);
+    font: .9em/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  .table-scroll { overflow-x: auto; margin: 14px 0 20px; }
+  .readme table { width: 100%; border-collapse: collapse; font-size: 12.5px; line-height: 1.45; }
+  .readme th, .readme td { padding: 8px 9px; border: 1px solid var(--rule); text-align: left; vertical-align: top; }
+  .readme th { background: var(--soft); color: var(--ink); font-weight: 650; }
+  .readme-code {
+    margin: 12px 0 20px;
+    padding: 13px 15px;
+    overflow-x: auto;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: var(--editor);
+    color: var(--ink);
+    font: 11.5px/1.48 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  .readme-code code {
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+  }
+  .code-panel { min-width: 0; display: flex; flex-direction: column; overflow: hidden; background: var(--editor); }
+  .editor-bar {
+    min-height: 42px;
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid var(--editor-rule);
+    background: var(--editor-raised);
+  }
+  .tabs { display: flex; min-width: 0; overflow-x: auto; }
+  .tab {
+    position: relative;
+    flex: 0 0 auto;
+    padding: 0 18px;
+    border: 0;
+    border-right: 1px solid var(--editor-rule);
+    color: #aeb6c4;
+    background: transparent;
+    cursor: pointer;
+    font: 12px/42px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  .tab:hover { color: #fff; background: #171c25; }
+  .tab.is-active { color: #fff; background: var(--editor); }
+  .tab.is-active::after {
+    content: "";
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: 0;
+    height: 2px;
+    background: var(--builtin);
+  }
+  .copy-button {
+    align-self: center;
+    flex: 0 0 auto;
+    margin-right: 10px;
+    padding: 5px 10px;
+    border: 1px solid #39404d;
+    border-radius: 4px;
+    color: #cfd5df;
+    background: #171c25;
+    cursor: pointer;
+    font-size: 11px;
+  }
+  .copy-button:hover { color: #fff; border-color: #667085; }
+  .code-stage { position: relative; min-height: 0; flex: 1 1 auto; }
+  .code-pane { position: absolute; inset: 0; min-width: 0; overflow: auto; background: var(--editor); }
+  .code-pane[hidden] { display: none; }
+  .code-meta {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px 18px;
+    padding: 8px 20px;
+    border-bottom: 1px solid #1d222b;
+    color: #7f8998;
+    background: rgba(9, 11, 15, .96);
+    font: 10px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    backdrop-filter: blur(8px);
+  }
+  .source {
+    min-width: max-content;
+    margin: 0;
+    padding: 20px 28px 70px;
+    color: var(--code);
+    background: var(--editor);
+    tab-size: 4;
+    font: 13px/1.57 "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    white-space: pre;
+  }
+  .tok-comment { color: var(--comment); font-style: italic; }
+  .tok-keyword { color: var(--keyword); font-weight: 600; }
+  .tok-string { color: var(--string); }
+  .tok-number { color: var(--number); }
+  .tok-builtin { color: var(--builtin); }
+  .tok-definition { color: var(--definition); }
+  .tok-constant { color: var(--constant); }
+  .tok-operator { color: var(--operator); }
+  .readme-panel::-webkit-scrollbar, .code-pane::-webkit-scrollbar, .tabs::-webkit-scrollbar { width: 11px; height: 11px; }
+  .readme-panel::-webkit-scrollbar-thumb { background: #3b434f; border: 3px solid var(--paper); border-radius: 8px; }
+  .readme-panel::-webkit-scrollbar-corner { background: var(--paper); }
+  .code-pane::-webkit-scrollbar-thumb, .tabs::-webkit-scrollbar-thumb { background: #343b47; border: 3px solid var(--editor); border-radius: 8px; }
+  .code-pane::-webkit-scrollbar-corner { background: var(--editor); }
+  @media (max-width: 900px) {
+    body { overflow: auto; }
+    .topbar { position: sticky; top: 0; z-index: 20; }
+    .workspace { height: auto; display: block; }
+    .readme-panel { max-height: none; overflow: visible; border-right: 0; border-bottom: 1px solid var(--editor-rule); }
+    .code-panel { height: 78vh; min-height: 540px; }
+    .readme { padding-inline: 22px; }
+    .code-meta span:last-child { display: none; }
+  }
+  @media print {
+    body { overflow: visible; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .topbar { position: static; }
+    .workspace { height: auto; display: block; }
+    .readme-panel { overflow: visible; border: 0; }
+    .panel-label, .editor-bar, .code-meta { position: static; }
+    .code-panel { display: block; overflow: visible; }
+    .code-stage { display: block; }
+    .code-pane { position: static; display: block !important; overflow: visible; break-before: page; }
+    .source { min-width: 0; white-space: pre-wrap; font-size: 7pt; }
+    .copy-button { display: none; }
+  }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="identity">
+    <h1>Machine Learning Code Sample</h1>
+    <p>ProtBERT embeddings and class-weighted multiclass XGBoost</p>
+  </div>
+  <div class="author">Jingkai LAN</div>
+</header>
+<main class="workspace">
+  <section class="readme-panel" aria-label="Project README">
+    <div class="panel-label"><span>README.md</span><span>PROJECT OVERVIEW</span></div>
+    <article class="readme"><h1>Machine Learning Code Sample</h1>
+<p>This interactive code sample presents two selected scripts from my master&#x27;s thesis that I believe demonstrate my practical ability to build a machine learning workflow for biological sequence data. The project overview appears in this panel, while the complete Python source files can be viewed using the tabs alongside it. Together, the scripts form one connected pipeline, from protein sequences to fixed-size representations and a trained three-class classifier.</p>
+<h2>Background and purpose</h2>
+<p>My master&#x27;s thesis addressed two related questions: whether a protein is metal-binding, and, if it is, whether its function is enzymatic or structural. The code shown here approaches both questions within one three-class task. Each protein is classified as an enzymatic metal-binding protein, a structural metal-binding protein, or a non-metalloprotein.</p>
+<p>Protein sequences have variable lengths, whereas conventional machine learning models require fixed-size inputs. The first script therefore converts each sequence into a numerical representation using ProtBERT. The second script trains a class-weighted XGBoost model on these representations. This design connects protein language model embeddings with an interpretable supervised learning workflow and accounts for differences in the number of training examples across the three classes.</p>
+<h2>Files and execution order</h2>
+<div class="table-scroll"><table><thead><tr>
+<th>Order</th>
+<th>File</th>
+<th>Purpose</th>
+</tr></thead><tbody>
+<tr>
+<td>1</td>
+<td><code>1_extract_embeddings.py</code></td>
+<td>Converts labelled protein sequences into fixed-size ProtBERT embeddings for three-class classification.</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>2_train_xgboost.py</code></td>
+<td>Trains, selects, and evaluates class-weighted multiclass XGBoost models using the generated embeddings.</td>
+</tr>
+</tbody></table></div>
+<p>Run <code>1_extract_embeddings.py</code> first. Its three output CSV files are the inputs to <code>2_train_xgboost.py</code>.</p>
+<h2>Input</h2>
+<h3>Sequence data</h3>
+<p>The datasets are stored outside this code sample. Their locations are supplied through command-line arguments. The embedding script expects a directory with predefined training, validation, and test splits:</p>
+<pre class="readme-code language-text"><code>/path/to/dataset_original/
+├── pident30_total_train.txt
+├── pident30_total_val.txt
+└── pident30_total_test.txt</code></pre>
+<p>Each line contains a protein identifier followed by its amino-acid sequence:</p>
+<pre class="readme-code language-text"><code>1b4u_A_pos_enz,MTEKKER...
+2abc_B_pos_stru,VLSPAD...
+3xyz_C_neg_enz,MRLVKAA...</code></pre>
+<p>The identifier is mapped to one of three labels:</p>
+<div class="table-scroll"><table><thead><tr>
+<th>Label</th>
+<th>Identifier pattern</th>
+<th>Class</th>
+</tr></thead><tbody>
+<tr>
+<td><code>0</code></td>
+<td><code>pos_stru</code></td>
+<td>Structural metal-binding protein</td>
+</tr>
+<tr>
+<td><code>1</code></td>
+<td><code>pos_enz</code></td>
+<td>Enzymatic metal-binding protein</td>
+</tr>
+<tr>
+<td><code>2</code></td>
+<td><code>neg</code></td>
+<td>Non-metalloprotein; <code>neg_enz</code> and <code>neg_stru</code> are combined in this class</td>
+</tr>
+</tbody></table></div>
+<p>Rows that do not contain one of these patterns are skipped. Dataset construction and sequence-level split generation occur before this workflow and are outside this code sample.</p>
+<h3>Representation source</h3>
+<p>The embedding script supports three ProtBERT sources:</p>
+<ul>
+<li><code>bert</code>: the pretrained <code>Rostlab/prot_bert_bfd</code> model;</li>
+<li><code>adapter</code>: ProtBERT with a trained adapter supplied through <code>--adapter_path</code>; and</li>
+<li><code>weights</code>: ProtBERT loaded with a local checkpoint supplied through <code>--weights_path</code>.</li>
+</ul>
+<p>A transformer layer can be selected explicitly. Each sequence is represented either by its <code>[CLS]</code> vector or by mean pooling across residue embeddings.</p>
+<h2>Processing workflow</h2>
+<h3>1. Extract protein embeddings</h3>
+<p>The following example extracts mean-pooled representations from layer 23 of the pretrained model:</p>
+<pre class="readme-code language-bash"><code>python 1_extract_embeddings.py \
+  --data_dir /path/to/dataset_original \
+  --out_root /path/to/outputs/embeddings_3class \
+  --model bert \
+  --mode pool \
+  --layer 23 \
+  --device cuda</code></pre>
+<p>For each data split, the script:</p>
+<ol>
+<li>reads protein identifiers and sequences;</li>
+<li>assigns the three class labels from the identifier patterns;</li>
+<li>formats and tokenizes the amino-acid sequences for ProtBERT;</li>
+<li>performs batched inference without gradient calculation;</li>
+<li>selects the requested transformer hidden layer;</li>
+<li>reduces the variable-length token representations to one fixed-size vector per protein; and</li>
+<li>writes the identifiers, labels, and embedding features to CSV.</li>
+</ol>
+<p>The example command produces:</p>
+<pre class="readme-code language-text"><code>/path/to/outputs/embeddings_3class/raw_pool/
+├── train.csv
+├── val.csv
+└── test.csv</code></pre>
+<p>Each CSV uses the following structure:</p>
+<pre class="readme-code language-text"><code>id,label,f0,f1,...,f1023</code></pre>
+<p>The training split must contain all three labels, and the train, validation, and test CSV files must use the same feature columns.</p>
+<h3>2. Train and evaluate XGBoost</h3>
+<pre class="readme-code language-bash"><code>python 2_train_xgboost.py \
+  --train /path/to/outputs/embeddings_3class/raw_pool/train.csv \
+  --val /path/to/outputs/embeddings_3class/raw_pool/val.csv \
+  --test /path/to/outputs/embeddings_3class/raw_pool/test.csv \
+  --models_dir /path/to/outputs/xgboost_3class_models \
+  --select_metric accuracy</code></pre>
+<p>The training script:</p>
+<ol>
+<li>loads the embedding features and maps the labels to integers <code>{0, 1, 2}</code>;</li>
+<li>calculates inverse-frequency weights from the training split so that each class has equal total influence during fitting;</li>
+<li>searches combinations of learning rate, tree depth, row sampling, column sampling, and L2 regularization;</li>
+<li>trains multiclass XGBoost models on a CUDA GPU;</li>
+<li>uses validation multiclass log loss for early stopping;</li>
+<li>records validation accuracy and macro-averaged precision, recall, and F1;</li>
+<li>selects the best configuration by validation accuracy or macro F1; and</li>
+<li>evaluates the saved models on the held-out test split and exports predictions from the selected model.</li>
+</ol>
+<p>The class weight for class <code>c</code> is calculated only from the training data:</p>
+<pre class="readme-code language-text"><code>weight(c) = total training samples / (number of classes × samples in class c)</code></pre>
+<p>This weighting changes each class&#x27;s contribution to model fitting without duplicating or removing sequences. Validation and test samples remain unweighted.</p>
+<h2>Output</h2>
+<p>The workflow produces:</p>
+<ul>
+<li><code>train.csv</code>, <code>val.csv</code>, and <code>test.csv</code>, containing protein IDs, three-class labels, and ProtBERT features;</li>
+<li>serialized XGBoost models for the evaluated hyperparameter combinations;</li>
+<li><code>validation_summary.csv</code> and <code>test_summary.csv</code>, containing accuracy and macro-averaged precision, recall, and F1; and</li>
+<li><code>best_model_test_predictions.csv</code>, written inside <code>--models_dir</code> and containing the selected model&#x27;s predicted label for each test protein.</li>
+</ul>
+<p>Together, these outputs preserve the path from the original amino-acid sequence and class annotation through representation learning, model selection, and final three-class prediction.</p>
+<h2>Requirements</h2>
+<ul>
+<li>Python 3</li>
+<li>PyTorch, Hugging Face Transformers, and AdapterHub adapters</li>
+<li>NumPy, pandas, and scikit-learn</li>
+<li>XGBoost 3.x with CUDA support</li>
+<li>A CUDA-capable GPU for the intended execution path</li>
+</ul>
+<p>The datasets, pretrained model files, trained adapters or checkpoints, and generated outputs are not included in this compact code sample.</p></article>
+  </section>
+  <section class="code-panel" aria-label="Python source files">
+    <div class="editor-bar">
+      <div class="tabs" role="tablist" aria-label="Source files"><button class="tab is-active" type="button" role="tab" aria-selected="true" aria-controls="code-pane-1" data-target="code-pane-1">1_extract_embeddings.py</button><button class="tab" type="button" role="tab" aria-selected="false" aria-controls="code-pane-2" data-target="code-pane-2">2_train_xgboost.py</button></div>
+      <button class="copy-button" type="button">Copy code</button>
+    </div>
+    <div class="code-stage"><section class="code-pane is-active" id="code-pane-1" role="tabpanel">
+  <div class="code-meta">
+    <span>Complete Python source</span>
+    <span>283 lines</span>
+    <span>SHA-256 d87a370c006d925ef2f840b247f3900f39c81257e801871799b062579c465578</span>
+  </div>
+  <pre class="source"><code data-source-file="1_extract_embeddings.py" data-sha256="d87a370c006d925ef2f840b247f3900f39c81257e801871799b062579c465578"><span class="tok-comment">#!/usr/bin/env python3</span>
+<span class="tok-string">"""
+Generate fixed-size ProtBERT embeddings for three-class classification.
+
+This is step 1 of the code sample. The generated feature tables are used by
+`2_train_xgboost.py`.
+
+* Supports raw ProtBERT-BFD, an Adapter-tuned model, or local model weights.
+* Two embedding modes:
+    1. 'cls'  – take the [CLS] token of a chosen transformer layer.
+    2. 'pool' – mean-pool the residue embeddings of that layer.
+
+Input
+=====
+The dataset is supplied separately. `--data_dir` must point to a directory
+containing `pident30_total_{train,val,test}.txt`.
+
+Plain-text rows look like:
+    1b4u_A_neg_enz,MTEKKER...
+    2abc_B_pos_stru,VLSPAD...
+    3xyz_C_pos_enz,MAGVEK...
+
+Each row contains `protein_id,amino_acid_sequence`. Labels are inferred from
+the protein identifier:
+    0 = pos_stru  (structural metal-binding protein)
+    1 = pos_enz   (enzymatic metal-binding protein)
+    2 = neg       (non-metalloprotein; includes neg_enz and neg_stru)
+Rows without one of these identifier patterns are skipped.
+
+Output
+======
+`--out_root` controls the output location. The script creates:
+    &lt;out_root&gt;/&lt;raw|adapter|weights&gt;_&lt;cls|pool&gt;/train.csv
+    &lt;out_root&gt;/&lt;raw|adapter|weights&gt;_&lt;cls|pool&gt;/val.csv
+    &lt;out_root&gt;/&lt;raw|adapter|weights&gt;_&lt;cls|pool&gt;/test.csv
+
+Each CSV row:
+    id,label,f0,f1,...,f{d-1}
+
+Run
+===
+python 1_extract_embeddings.py \
+    --data_dir /path/to/dataset_original \
+    --out_root /path/to/outputs/embeddings_3class \
+    --model bert --mode pool --layer 23 --device cuda
+
+Author: 2025-07-10
+"""</span>
+
+<span class="tok-keyword">import</span> argparse
+<span class="tok-keyword">import</span> csv
+<span class="tok-keyword">from</span> pathlib <span class="tok-keyword">import</span> Path
+<span class="tok-keyword">from</span> typing <span class="tok-keyword">import</span> List<span class="tok-operator">,</span> Tuple
+<span class="tok-keyword">import</span> torch
+<span class="tok-keyword">import</span> numpy <span class="tok-keyword">as</span> np
+<span class="tok-keyword">from</span> adapters<span class="tok-operator">.</span>composition <span class="tok-keyword">import</span> Stack
+<span class="tok-keyword">from</span> adapters <span class="tok-keyword">import</span> BertAdapterModel
+<span class="tok-keyword">from</span> transformers <span class="tok-keyword">import</span> BertTokenizer
+<span class="tok-keyword">from</span> transformers <span class="tok-keyword">import</span> BertModel
+
+
+<span class="tok-constant">MODEL_NAME</span> <span class="tok-operator">=</span> <span class="tok-string">"Rostlab/prot_bert_bfd"</span>
+<span class="tok-constant">MAX_LEN</span> <span class="tok-operator">=</span> <span class="tok-number">2048</span>          <span class="tok-comment"># maximum tokens (residues) per sequence</span>
+<span class="tok-constant">BATCH_SIZE</span> <span class="tok-operator">=</span> <span class="tok-number">8</span>          <span class="tok-comment"># GPU memory permitting</span>
+
+
+<span class="tok-comment"># ---------- Adapter loader -------------------------------------------------- #</span>
+<span class="tok-keyword">def</span> <span class="tok-definition">trained_adapter_bert</span><span class="tok-operator">(</span>model_name<span class="tok-operator">:</span> <span class="tok-builtin">str</span><span class="tok-operator">,</span> adapter_path<span class="tok-operator">:</span> <span class="tok-builtin">str</span><span class="tok-operator">)</span><span class="tok-operator">:</span>
+    <span class="tok-string">"""Load a ProtBERT model with a pre-trained adapter."""</span>
+    model <span class="tok-operator">=</span> BertAdapterModel<span class="tok-operator">.</span>from_pretrained<span class="tok-operator">(</span>model_name<span class="tok-operator">)</span>
+    model<span class="tok-operator">.</span>load_adapter<span class="tok-operator">(</span>adapter_path<span class="tok-operator">,</span> with_head<span class="tok-operator">=</span><span class="tok-keyword">True</span><span class="tok-operator">)</span>
+    model<span class="tok-operator">.</span>active_head <span class="tok-operator">=</span> <span class="tok-string">"AdapterBERT_head_adapter"</span>
+    model<span class="tok-operator">.</span>set_active_adapters<span class="tok-operator">(</span>Stack<span class="tok-operator">(</span><span class="tok-string">"AdapterBERT_adapter"</span><span class="tok-operator">)</span><span class="tok-operator">)</span>
+    <span class="tok-keyword">return</span> model
+
+
+<span class="tok-comment"># ---------- I/O helpers ----------------------------------------------------- #</span>
+<span class="tok-keyword">def</span> <span class="tok-definition">read_dataset</span><span class="tok-operator">(</span>path<span class="tok-operator">:</span> Path<span class="tok-operator">)</span> <span class="tok-operator">-&gt;</span> Tuple<span class="tok-operator">[</span>List<span class="tok-operator">[</span><span class="tok-builtin">str</span><span class="tok-operator">]</span><span class="tok-operator">,</span> List<span class="tok-operator">[</span><span class="tok-builtin">str</span><span class="tok-operator">]</span><span class="tok-operator">,</span> List<span class="tok-operator">[</span><span class="tok-builtin">int</span><span class="tok-operator">]</span><span class="tok-operator">]</span><span class="tok-operator">:</span>
+    <span class="tok-string">"""
+    Read ID, SEQ from a TXT file and keep three classes.
+
+    Labels:
+      0 = pos_stru
+      1 = pos_enz
+      2 = neg  (covers both 'neg_enz' and 'neg_stru')
+
+    NOTE: Do NOT use -1 for a real class. Many losses (e.g., CrossEntropyLoss)
+    expect class indices in [0, num_classes-1]. Use 2 for 'neg'.
+    """</span>
+    ids<span class="tok-operator">,</span> seqs<span class="tok-operator">,</span> labels <span class="tok-operator">=</span> <span class="tok-operator">[</span><span class="tok-operator">]</span><span class="tok-operator">,</span> <span class="tok-operator">[</span><span class="tok-operator">]</span><span class="tok-operator">,</span> <span class="tok-operator">[</span><span class="tok-operator">]</span>
+    <span class="tok-keyword">with</span> path<span class="tok-operator">.</span><span class="tok-builtin">open</span><span class="tok-operator">(</span><span class="tok-operator">)</span> <span class="tok-keyword">as</span> fh<span class="tok-operator">:</span>
+        <span class="tok-keyword">for</span> line <span class="tok-keyword">in</span> fh<span class="tok-operator">:</span>
+            line <span class="tok-operator">=</span> line<span class="tok-operator">.</span>strip<span class="tok-operator">(</span><span class="tok-operator">)</span>
+            <span class="tok-keyword">if</span> <span class="tok-keyword">not</span> line <span class="tok-keyword">or</span> <span class="tok-string">","</span> <span class="tok-keyword">not</span> <span class="tok-keyword">in</span> line<span class="tok-operator">:</span>
+                <span class="tok-keyword">continue</span>
+            prot_id<span class="tok-operator">,</span> seq <span class="tok-operator">=</span> line<span class="tok-operator">.</span>split<span class="tok-operator">(</span><span class="tok-string">","</span><span class="tok-operator">,</span> <span class="tok-number">1</span><span class="tok-operator">)</span>
+
+            <span class="tok-comment"># Map id → label</span>
+            <span class="tok-keyword">if</span> <span class="tok-string">"pos_stru"</span> <span class="tok-keyword">in</span> prot_id<span class="tok-operator">:</span>
+                label <span class="tok-operator">=</span> <span class="tok-number">0</span>
+            <span class="tok-keyword">elif</span> <span class="tok-string">"pos_enz"</span> <span class="tok-keyword">in</span> prot_id<span class="tok-operator">:</span>
+                label <span class="tok-operator">=</span> <span class="tok-number">1</span>
+            <span class="tok-keyword">elif</span> <span class="tok-string">"neg"</span> <span class="tok-keyword">in</span> prot_id<span class="tok-operator">:</span>  <span class="tok-comment"># matches 'neg_enz' or 'neg_stru'</span>
+                label <span class="tok-operator">=</span> <span class="tok-number">2</span>
+            <span class="tok-keyword">else</span><span class="tok-operator">:</span>
+                <span class="tok-keyword">continue</span>  <span class="tok-comment"># skip unknown pattern</span>
+
+            ids<span class="tok-operator">.</span>append<span class="tok-operator">(</span>prot_id<span class="tok-operator">)</span>
+            seqs<span class="tok-operator">.</span>append<span class="tok-operator">(</span>seq<span class="tok-operator">.</span>strip<span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">)</span>
+            labels<span class="tok-operator">.</span>append<span class="tok-operator">(</span>label<span class="tok-operator">)</span>
+    <span class="tok-keyword">return</span> ids<span class="tok-operator">,</span> seqs<span class="tok-operator">,</span> labels
+
+
+<span class="tok-keyword">def</span> <span class="tok-definition">write_csv</span><span class="tok-operator">(</span>path<span class="tok-operator">:</span> Path<span class="tok-operator">,</span> ids<span class="tok-operator">:</span> List<span class="tok-operator">[</span><span class="tok-builtin">str</span><span class="tok-operator">]</span><span class="tok-operator">,</span> labels<span class="tok-operator">:</span> List<span class="tok-operator">[</span><span class="tok-builtin">int</span><span class="tok-operator">]</span><span class="tok-operator">,</span> embs<span class="tok-operator">:</span> np<span class="tok-operator">.</span>ndarray<span class="tok-operator">)</span><span class="tok-operator">:</span>
+    <span class="tok-string">"""Write embeddings to disk; path parent dir is created if absent."""</span>
+    path<span class="tok-operator">.</span>parent<span class="tok-operator">.</span>mkdir<span class="tok-operator">(</span>parents<span class="tok-operator">=</span><span class="tok-keyword">True</span><span class="tok-operator">,</span> exist_ok<span class="tok-operator">=</span><span class="tok-keyword">True</span><span class="tok-operator">)</span>
+    <span class="tok-keyword">with</span> path<span class="tok-operator">.</span><span class="tok-builtin">open</span><span class="tok-operator">(</span><span class="tok-string">"w"</span><span class="tok-operator">,</span> newline<span class="tok-operator">=</span><span class="tok-string">""</span><span class="tok-operator">)</span> <span class="tok-keyword">as</span> fh<span class="tok-operator">:</span>
+        writer <span class="tok-operator">=</span> csv<span class="tok-operator">.</span>writer<span class="tok-operator">(</span>fh<span class="tok-operator">)</span>
+        d <span class="tok-operator">=</span> embs<span class="tok-operator">.</span>shape<span class="tok-operator">[</span><span class="tok-number">1</span><span class="tok-operator">]</span>
+        header <span class="tok-operator">=</span> <span class="tok-operator">[</span><span class="tok-string">"id"</span><span class="tok-operator">,</span> <span class="tok-string">"label"</span><span class="tok-operator">]</span> <span class="tok-operator">+</span> <span class="tok-operator">[</span>f"f<span class="tok-operator">{</span>i<span class="tok-operator">}</span>" <span class="tok-keyword">for</span> i <span class="tok-keyword">in</span> <span class="tok-builtin">range</span><span class="tok-operator">(</span>d<span class="tok-operator">)</span><span class="tok-operator">]</span>
+        writer<span class="tok-operator">.</span>writerow<span class="tok-operator">(</span>header<span class="tok-operator">)</span>
+        <span class="tok-keyword">for</span> prot_id<span class="tok-operator">,</span> lab<span class="tok-operator">,</span> vec <span class="tok-keyword">in</span> <span class="tok-builtin">zip</span><span class="tok-operator">(</span>ids<span class="tok-operator">,</span> labels<span class="tok-operator">,</span> embs<span class="tok-operator">)</span><span class="tok-operator">:</span>
+            writer<span class="tok-operator">.</span>writerow<span class="tok-operator">(</span><span class="tok-operator">[</span>prot_id<span class="tok-operator">,</span> lab<span class="tok-operator">]</span> <span class="tok-operator">+</span> vec<span class="tok-operator">.</span>tolist<span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">)</span>
+    <span class="tok-builtin">print</span><span class="tok-operator">(</span>f"[+] Saved <span class="tok-operator">{</span>path<span class="tok-operator">}</span>  shape=<span class="tok-operator">{</span>embs<span class="tok-operator">.</span>shape<span class="tok-operator">}</span>"<span class="tok-operator">)</span>
+
+
+<span class="tok-comment"># ---------- Embedding extraction ------------------------------------------- #</span>
+<span class="tok-keyword">def</span> <span class="tok-definition">sequences_to_embeddings</span><span class="tok-operator">(</span>
+    ids<span class="tok-operator">:</span> List<span class="tok-operator">[</span><span class="tok-builtin">str</span><span class="tok-operator">]</span><span class="tok-operator">,</span>
+    seqs<span class="tok-operator">:</span> List<span class="tok-operator">[</span><span class="tok-builtin">str</span><span class="tok-operator">]</span><span class="tok-operator">,</span>
+    model<span class="tok-operator">,</span>
+    tokenizer<span class="tok-operator">,</span>
+    layer_idx<span class="tok-operator">:</span> <span class="tok-builtin">int</span><span class="tok-operator">,</span>
+    mode<span class="tok-operator">:</span> <span class="tok-builtin">str</span><span class="tok-operator">,</span>
+    device<span class="tok-operator">:</span> torch<span class="tok-operator">.</span>device<span class="tok-operator">,</span>
+<span class="tok-operator">)</span> <span class="tok-operator">-&gt;</span> np<span class="tok-operator">.</span>ndarray<span class="tok-operator">:</span>
+    <span class="tok-string">"""
+    Convert sequences to fixed-size vectors.
+
+    mode:
+        'cls'  -&gt; [CLS] of layer idx
+        'pool' -&gt; mean of token embeddings (excluding [CLS]/[SEP]) of layer idx
+    Returns:
+        (N, D) ndarray
+    """</span>
+    model<span class="tok-operator">.</span><span class="tok-builtin">eval</span><span class="tok-operator">(</span><span class="tok-operator">)</span>
+    all_vecs <span class="tok-operator">=</span> <span class="tok-operator">[</span><span class="tok-operator">]</span>
+
+    <span class="tok-comment"># ProtBERT expects residues separated by space, e.g. "M G D V ..."</span>
+    spaced <span class="tok-operator">=</span> <span class="tok-operator">[</span><span class="tok-string">" "</span><span class="tok-operator">.</span>join<span class="tok-operator">(</span><span class="tok-builtin">list</span><span class="tok-operator">(</span>s<span class="tok-operator">.</span>upper<span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">)</span><span class="tok-operator">)</span><span class="tok-operator">[</span><span class="tok-operator">:</span> <span class="tok-constant">MAX_LEN</span> <span class="tok-operator">*</span> <span class="tok-number">2</span> <span class="tok-operator">-</span> <span class="tok-number">1</span><span class="tok-operator">]</span> <span class="tok-keyword">for</span> s <span class="tok-keyword">in</span> seqs<span class="tok-operator">]</span>
+
+    <span class="tok-keyword">with</span> torch<span class="tok-operator">.</span>no_grad<span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">:</span>
+        <span class="tok-keyword">for</span> i <span class="tok-keyword">in</span> <span class="tok-builtin">range</span><span class="tok-operator">(</span><span class="tok-number">0</span><span class="tok-operator">,</span> <span class="tok-builtin">len</span><span class="tok-operator">(</span>seqs<span class="tok-operator">)</span><span class="tok-operator">,</span> <span class="tok-constant">BATCH_SIZE</span><span class="tok-operator">)</span><span class="tok-operator">:</span>
+            batch_seqs <span class="tok-operator">=</span> spaced<span class="tok-operator">[</span>i <span class="tok-operator">:</span> i <span class="tok-operator">+</span> <span class="tok-constant">BATCH_SIZE</span><span class="tok-operator">]</span>
+            enc <span class="tok-operator">=</span> tokenizer<span class="tok-operator">(</span>
+                batch_seqs<span class="tok-operator">,</span>
+                return_tensors<span class="tok-operator">=</span><span class="tok-string">"pt"</span><span class="tok-operator">,</span>
+                padding<span class="tok-operator">=</span><span class="tok-keyword">True</span><span class="tok-operator">,</span>
+                truncation<span class="tok-operator">=</span><span class="tok-keyword">True</span><span class="tok-operator">,</span>
+                max_length<span class="tok-operator">=</span><span class="tok-constant">MAX_LEN</span><span class="tok-operator">,</span>
+            <span class="tok-operator">)</span><span class="tok-operator">.</span>to<span class="tok-operator">(</span>device<span class="tok-operator">)</span>
+
+            out <span class="tok-operator">=</span> model<span class="tok-operator">(</span>
+                <span class="tok-operator">**</span>enc<span class="tok-operator">,</span>
+                output_hidden_states<span class="tok-operator">=</span><span class="tok-keyword">True</span><span class="tok-operator">,</span>
+                return_dict<span class="tok-operator">=</span><span class="tok-keyword">True</span><span class="tok-operator">,</span>
+            <span class="tok-operator">)</span>
+            hidden <span class="tok-operator">=</span> out<span class="tok-operator">.</span>hidden_states<span class="tok-operator">[</span>layer_idx<span class="tok-operator">]</span>  <span class="tok-comment"># (B, T, D)</span>
+            attn <span class="tok-operator">=</span> enc<span class="tok-operator">[</span><span class="tok-string">"attention_mask"</span><span class="tok-operator">]</span>          <span class="tok-comment"># (B, T)</span>
+
+            <span class="tok-keyword">for</span> h<span class="tok-operator">,</span> m <span class="tok-keyword">in</span> <span class="tok-builtin">zip</span><span class="tok-operator">(</span>hidden<span class="tok-operator">,</span> attn<span class="tok-operator">)</span><span class="tok-operator">:</span>
+                <span class="tok-comment"># h: (T, D)  m: (T,)</span>
+                <span class="tok-keyword">if</span> mode <span class="tok-operator">==</span> <span class="tok-string">"cls"</span><span class="tok-operator">:</span>
+                    vec <span class="tok-operator">=</span> h<span class="tok-operator">[</span><span class="tok-number">0</span><span class="tok-operator">]</span>  <span class="tok-comment"># CLS position</span>
+                <span class="tok-keyword">else</span><span class="tok-operator">:</span>  <span class="tok-comment"># 'pool'</span>
+                    real_len <span class="tok-operator">=</span> m<span class="tok-operator">.</span><span class="tok-builtin">sum</span><span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">.</span>item<span class="tok-operator">(</span><span class="tok-operator">)</span>
+                    tok_embs <span class="tok-operator">=</span> h<span class="tok-operator">[</span><span class="tok-number">1</span> <span class="tok-operator">:</span> real_len <span class="tok-operator">-</span> <span class="tok-number">1</span><span class="tok-operator">]</span>          <span class="tok-comment"># exclude CLS/SEP</span>
+                    vec <span class="tok-operator">=</span> tok_embs<span class="tok-operator">.</span>mean<span class="tok-operator">(</span>dim<span class="tok-operator">=</span><span class="tok-number">0</span><span class="tok-operator">)</span>
+                all_vecs<span class="tok-operator">.</span>append<span class="tok-operator">(</span>vec<span class="tok-operator">.</span>cpu<span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">.</span>numpy<span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">)</span>
+
+    <span class="tok-keyword">return</span> np<span class="tok-operator">.</span>vstack<span class="tok-operator">(</span>all_vecs<span class="tok-operator">)</span>  <span class="tok-comment"># (N, D)</span>
+
+
+<span class="tok-comment"># ---------- Main driver ---------------------------------------------------- #</span>
+<span class="tok-keyword">def</span> <span class="tok-definition">main</span><span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">:</span>
+    parser <span class="tok-operator">=</span> argparse<span class="tok-operator">.</span>ArgumentParser<span class="tok-operator">(</span><span class="tok-operator">)</span>
+    parser<span class="tok-operator">.</span>add_argument<span class="tok-operator">(</span><span class="tok-string">"--data_dir"</span><span class="tok-operator">,</span> <span class="tok-builtin">type</span><span class="tok-operator">=</span>Path<span class="tok-operator">,</span>
+                        default<span class="tok-operator">=</span>Path<span class="tok-operator">(</span><span class="tok-string">"dataset_original"</span><span class="tok-operator">)</span><span class="tok-operator">,</span>
+                        <span class="tok-builtin">help</span><span class="tok-operator">=</span><span class="tok-string">"Directory containing pident30_total_{train,val,test}.txt"</span><span class="tok-operator">)</span>
+    parser<span class="tok-operator">.</span>add_argument<span class="tok-operator">(</span><span class="tok-string">"--out_root"</span><span class="tok-operator">,</span> <span class="tok-builtin">type</span><span class="tok-operator">=</span>Path<span class="tok-operator">,</span>
+                        default<span class="tok-operator">=</span>Path<span class="tok-operator">(</span><span class="tok-string">"embinding_ML_dataset"</span><span class="tok-operator">)</span><span class="tok-operator">,</span>
+                        <span class="tok-builtin">help</span><span class="tok-operator">=</span><span class="tok-string">"Root directory for all output CSVs"</span><span class="tok-operator">)</span>
+    parser<span class="tok-operator">.</span>add_argument<span class="tok-operator">(</span><span class="tok-string">"--mode"</span><span class="tok-operator">,</span> choices<span class="tok-operator">=</span><span class="tok-operator">[</span><span class="tok-string">"cls"</span><span class="tok-operator">,</span> <span class="tok-string">"pool"</span><span class="tok-operator">]</span><span class="tok-operator">,</span> required<span class="tok-operator">=</span><span class="tok-keyword">True</span><span class="tok-operator">,</span>
+                        <span class="tok-builtin">help</span><span class="tok-operator">=</span><span class="tok-string">"Embedding strategy"</span><span class="tok-operator">)</span>
+    <span class="tok-comment">#parser.add_argument("--model", choices=["bert", "adapter"], default="bert",</span>
+    <span class="tok-comment">#                    help="Which backbone to use")</span>
+    parser<span class="tok-operator">.</span>add_argument<span class="tok-operator">(</span><span class="tok-string">"--adapter_path"</span><span class="tok-operator">,</span> <span class="tok-builtin">type</span><span class="tok-operator">=</span>Path<span class="tok-operator">,</span>
+                        <span class="tok-builtin">help</span><span class="tok-operator">=</span><span class="tok-string">"Path to adapter dir (needed if --model adapter)"</span><span class="tok-operator">)</span>
+    parser<span class="tok-operator">.</span>add_argument<span class="tok-operator">(</span><span class="tok-string">"--layer"</span><span class="tok-operator">,</span> <span class="tok-builtin">type</span><span class="tok-operator">=</span><span class="tok-builtin">int</span><span class="tok-operator">,</span> default<span class="tok-operator">=</span><span class="tok-keyword">None</span><span class="tok-operator">,</span>
+                        <span class="tok-builtin">help</span><span class="tok-operator">=</span><span class="tok-string">"Transformer layer index (1-based); "</span>
+                             <span class="tok-string">"default = last hidden layer"</span><span class="tok-operator">)</span>
+    parser<span class="tok-operator">.</span>add_argument<span class="tok-operator">(</span><span class="tok-string">"--device"</span><span class="tok-operator">,</span> default<span class="tok-operator">=</span><span class="tok-string">"cuda"</span><span class="tok-operator">,</span>
+                        <span class="tok-builtin">help</span><span class="tok-operator">=</span><span class="tok-string">"'cuda' or 'cpu'"</span><span class="tok-operator">)</span>
+    <span class="tok-comment"># ---------- argparse (add new option) -------------------------------------- #</span>
+    parser<span class="tok-operator">.</span>add_argument<span class="tok-operator">(</span><span class="tok-string">"--model"</span><span class="tok-operator">,</span> choices<span class="tok-operator">=</span><span class="tok-operator">[</span><span class="tok-string">"bert"</span><span class="tok-operator">,</span> <span class="tok-string">"adapter"</span><span class="tok-operator">,</span> <span class="tok-string">"weights"</span><span class="tok-operator">]</span><span class="tok-operator">,</span> default<span class="tok-operator">=</span><span class="tok-string">"bert"</span><span class="tok-operator">,</span>
+                        <span class="tok-builtin">help</span><span class="tok-operator">=</span><span class="tok-string">"Backbone: raw ProtBERT, Adapter‑tuned, or local .pt weights"</span><span class="tok-operator">)</span>
+    parser<span class="tok-operator">.</span>add_argument<span class="tok-operator">(</span><span class="tok-string">"--weights_path"</span><span class="tok-operator">,</span> <span class="tok-builtin">type</span><span class="tok-operator">=</span>Path<span class="tok-operator">,</span>
+                        <span class="tok-builtin">help</span><span class="tok-operator">=</span><span class="tok-string">"Path to local .pt file (required if --model weights)"</span><span class="tok-operator">)</span>
+    parser<span class="tok-operator">.</span>add_argument<span class="tok-operator">(</span><span class="tok-string">"--ckpt_key"</span><span class="tok-operator">,</span> default<span class="tok-operator">=</span><span class="tok-string">"transformer"</span><span class="tok-operator">,</span>
+                    <span class="tok-builtin">help</span><span class="tok-operator">=</span><span class="tok-string">"Name of the dict‑field that stores BERT weights in the .pt file"</span><span class="tok-operator">)</span>
+    args <span class="tok-operator">=</span> parser<span class="tok-operator">.</span>parse_args<span class="tok-operator">(</span><span class="tok-operator">)</span>
+
+    device <span class="tok-operator">=</span> torch<span class="tok-operator">.</span>device<span class="tok-operator">(</span>args<span class="tok-operator">.</span>device <span class="tok-keyword">if</span> torch<span class="tok-operator">.</span>cuda<span class="tok-operator">.</span>is_available<span class="tok-operator">(</span><span class="tok-operator">)</span> <span class="tok-keyword">else</span> <span class="tok-string">"cpu"</span><span class="tok-operator">)</span>
+
+    <span class="tok-comment"># ---------- Load model &amp; tokenizer ------------------------------------- #</span>
+    tokenizer <span class="tok-operator">=</span> BertTokenizer<span class="tok-operator">.</span>from_pretrained<span class="tok-operator">(</span><span class="tok-constant">MODEL_NAME</span><span class="tok-operator">,</span> do_lower_case<span class="tok-operator">=</span><span class="tok-keyword">False</span><span class="tok-operator">)</span>
+
+    <span class="tok-string">'''if args.model == "bert":
+        model = BertModel.from_pretrained(MODEL_NAME)
+    else:
+        if not args.adapter_path:
+            raise ValueError("--adapter_path required when --model adapter")
+        model = trained_adapter_bert(MODEL_NAME, str(args.adapter_path))'''</span>
+
+    <span class="tok-comment"># ---------- model &amp; tokenizer loading ------------------------------------- #</span>
+    <span class="tok-keyword">if</span> args<span class="tok-operator">.</span>model <span class="tok-operator">==</span> <span class="tok-string">"bert"</span><span class="tok-operator">:</span>
+        model <span class="tok-operator">=</span> BertModel<span class="tok-operator">.</span>from_pretrained<span class="tok-operator">(</span><span class="tok-constant">MODEL_NAME</span><span class="tok-operator">)</span>
+    <span class="tok-keyword">elif</span> args<span class="tok-operator">.</span>model <span class="tok-operator">==</span> <span class="tok-string">"adapter"</span><span class="tok-operator">:</span>
+        <span class="tok-keyword">if</span> <span class="tok-keyword">not</span> args<span class="tok-operator">.</span>adapter_path<span class="tok-operator">:</span>
+            <span class="tok-keyword">raise</span> <span class="tok-builtin">ValueError</span><span class="tok-operator">(</span><span class="tok-string">"--adapter_path required when --model adapter"</span><span class="tok-operator">)</span>
+        model <span class="tok-operator">=</span> trained_adapter_bert<span class="tok-operator">(</span><span class="tok-constant">MODEL_NAME</span><span class="tok-operator">,</span> <span class="tok-builtin">str</span><span class="tok-operator">(</span>args<span class="tok-operator">.</span>adapter_path<span class="tok-operator">)</span><span class="tok-operator">)</span>
+    <span class="tok-keyword">else</span><span class="tok-operator">:</span>  <span class="tok-comment"># args.model == "weights"</span>
+        <span class="tok-keyword">if</span> <span class="tok-keyword">not</span> args<span class="tok-operator">.</span>weights_path<span class="tok-operator">:</span>
+            <span class="tok-keyword">raise</span> <span class="tok-builtin">ValueError</span><span class="tok-operator">(</span><span class="tok-string">"--weights_path required when --model weights"</span><span class="tok-operator">)</span>
+        model <span class="tok-operator">=</span> BertModel<span class="tok-operator">.</span>from_pretrained<span class="tok-operator">(</span><span class="tok-constant">MODEL_NAME</span><span class="tok-operator">)</span>
+
+        ckpt <span class="tok-operator">=</span> torch<span class="tok-operator">.</span>load<span class="tok-operator">(</span>args<span class="tok-operator">.</span>weights_path<span class="tok-operator">,</span> map_location<span class="tok-operator">=</span>device<span class="tok-operator">)</span>
+
+        <span class="tok-comment"># ---- NEW: extract the real BERT state_dict from the checkpoint -------- #</span>
+        <span class="tok-keyword">if</span> <span class="tok-builtin">isinstance</span><span class="tok-operator">(</span>ckpt<span class="tok-operator">,</span> <span class="tok-builtin">dict</span><span class="tok-operator">)</span> <span class="tok-keyword">and</span> args<span class="tok-operator">.</span>ckpt_key <span class="tok-keyword">in</span> ckpt<span class="tok-operator">:</span>
+            ckpt <span class="tok-operator">=</span> ckpt<span class="tok-operator">[</span>args<span class="tok-operator">.</span>ckpt_key<span class="tok-operator">]</span>          <span class="tok-comment"># e.g. "transformer"</span>
+        <span class="tok-comment"># if keys carry a prefix (“module.”, “transformer.”) strip it</span>
+        clean_sd <span class="tok-operator">=</span> <span class="tok-operator">{</span>k<span class="tok-operator">.</span>replace<span class="tok-operator">(</span><span class="tok-string">"module."</span><span class="tok-operator">,</span> <span class="tok-string">""</span><span class="tok-operator">)</span><span class="tok-operator">.</span>replace<span class="tok-operator">(</span><span class="tok-string">"transformer."</span><span class="tok-operator">,</span> <span class="tok-string">""</span><span class="tok-operator">)</span><span class="tok-operator">:</span> v
+                    <span class="tok-keyword">for</span> k<span class="tok-operator">,</span> v <span class="tok-keyword">in</span> ckpt<span class="tok-operator">.</span>items<span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">}</span>
+        <span class="tok-comment"># ----------------------------------------------------------------------- #</span>
+        missing<span class="tok-operator">,</span> unexpected <span class="tok-operator">=</span> model<span class="tok-operator">.</span>load_state_dict<span class="tok-operator">(</span>clean_sd<span class="tok-operator">,</span> strict<span class="tok-operator">=</span><span class="tok-keyword">False</span><span class="tok-operator">)</span>
+        <span class="tok-builtin">print</span><span class="tok-operator">(</span>f"[i] loaded BERT weights  missing=<span class="tok-operator">{</span><span class="tok-builtin">len</span><span class="tok-operator">(</span>missing<span class="tok-operator">)</span><span class="tok-operator">}</span>  unexpected=<span class="tok-operator">{</span><span class="tok-builtin">len</span><span class="tok-operator">(</span>unexpected<span class="tok-operator">)</span><span class="tok-operator">}</span>"<span class="tok-operator">)</span>
+
+    model<span class="tok-operator">.</span>to<span class="tok-operator">(</span>device<span class="tok-operator">)</span>
+
+    num_layers <span class="tok-operator">=</span> model<span class="tok-operator">.</span>config<span class="tok-operator">.</span>num_hidden_layers
+    layer_idx <span class="tok-operator">=</span> args<span class="tok-operator">.</span>layer <span class="tok-keyword">if</span> args<span class="tok-operator">.</span>layer <span class="tok-keyword">else</span> num_layers
+    <span class="tok-keyword">if</span> <span class="tok-keyword">not</span> <span class="tok-operator">(</span><span class="tok-number">0</span> <span class="tok-operator">&lt;</span> layer_idx <span class="tok-operator">&lt;=</span> num_layers<span class="tok-operator">)</span><span class="tok-operator">:</span>
+        <span class="tok-keyword">raise</span> <span class="tok-builtin">ValueError</span><span class="tok-operator">(</span>f"layer must be in [1, <span class="tok-operator">{</span>num_layers<span class="tok-operator">}</span>]"<span class="tok-operator">)</span>
+    <span class="tok-builtin">print</span><span class="tok-operator">(</span>f"[i] Extracting layer <span class="tok-operator">{</span>layer_idx<span class="tok-operator">}</span> of <span class="tok-operator">{</span>num_layers<span class="tok-operator">}</span>"<span class="tok-operator">)</span>
+
+    <span class="tok-comment"># ---------- Map mode/model to output subfolder ------------------------- #</span>
+    <span class="tok-comment">#subdir = f"{'adapter' if args.model=='adapter' else 'raw'}_{args.mode}"</span>
+    subdir <span class="tok-operator">=</span> f"<span class="tok-operator">{</span><span class="tok-string">'adapter'</span> <span class="tok-keyword">if</span> args<span class="tok-operator">.</span>model<span class="tok-operator">==</span><span class="tok-string">'adapter'</span> <span class="tok-keyword">else</span> <span class="tok-string">'weights'</span> <span class="tok-keyword">if</span> args<span class="tok-operator">.</span>model<span class="tok-operator">==</span><span class="tok-string">'weights'</span> <span class="tok-keyword">else</span> <span class="tok-string">'raw'</span><span class="tok-operator">}</span>_<span class="tok-operator">{</span>args<span class="tok-operator">.</span>mode<span class="tok-operator">}</span>"
+    out_dir <span class="tok-operator">=</span> args<span class="tok-operator">.</span>out_root <span class="tok-operator">/</span> subdir
+
+
+    <span class="tok-comment"># ---------- Process train / val / test --------------------------------- #</span>
+    <span class="tok-keyword">for</span> split <span class="tok-keyword">in</span> <span class="tok-operator">(</span><span class="tok-string">"train"</span><span class="tok-operator">,</span> <span class="tok-string">"val"</span><span class="tok-operator">,</span> <span class="tok-string">"test"</span><span class="tok-operator">)</span><span class="tok-operator">:</span>
+        txt_file <span class="tok-operator">=</span> args<span class="tok-operator">.</span>data_dir <span class="tok-operator">/</span> f"pident30_total_<span class="tok-operator">{</span>split<span class="tok-operator">}</span>.txt"
+        <span class="tok-keyword">if</span> <span class="tok-keyword">not</span> txt_file<span class="tok-operator">.</span>exists<span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">:</span>
+            <span class="tok-builtin">print</span><span class="tok-operator">(</span>f"[!] <span class="tok-operator">{</span>txt_file<span class="tok-operator">}</span> not found, skipping..."<span class="tok-operator">)</span>
+            <span class="tok-keyword">continue</span>
+
+        ids<span class="tok-operator">,</span> seqs<span class="tok-operator">,</span> labels <span class="tok-operator">=</span> read_dataset<span class="tok-operator">(</span>txt_file<span class="tok-operator">)</span>
+        <span class="tok-keyword">if</span> <span class="tok-keyword">not</span> ids<span class="tok-operator">:</span>
+            <span class="tok-builtin">print</span><span class="tok-operator">(</span>f"[i] No samples found in <span class="tok-operator">{</span>txt_file<span class="tok-operator">}</span>, skipping."<span class="tok-operator">)</span>
+            <span class="tok-keyword">continue</span>
+
+        embs <span class="tok-operator">=</span> sequences_to_embeddings<span class="tok-operator">(</span>
+            ids<span class="tok-operator">,</span> seqs<span class="tok-operator">,</span> model<span class="tok-operator">,</span> tokenizer<span class="tok-operator">,</span> layer_idx<span class="tok-operator">,</span> args<span class="tok-operator">.</span>mode<span class="tok-operator">,</span> device
+        <span class="tok-operator">)</span>
+        csv_path <span class="tok-operator">=</span> out_dir <span class="tok-operator">/</span> f"<span class="tok-operator">{</span>split<span class="tok-operator">}</span>.csv"
+        write_csv<span class="tok-operator">(</span>csv_path<span class="tok-operator">,</span> ids<span class="tok-operator">,</span> labels<span class="tok-operator">,</span> embs<span class="tok-operator">)</span>
+
+
+<span class="tok-keyword">if</span> <span class="tok-builtin">__name__</span> <span class="tok-operator">==</span> <span class="tok-string">"__main__"</span><span class="tok-operator">:</span>
+    main<span class="tok-operator">(</span><span class="tok-operator">)</span>
+</code></pre>
+</section><section class="code-pane" id="code-pane-2" role="tabpanel" hidden>
+  <div class="code-meta">
+    <span>Complete Python source</span>
+    <span>319 lines</span>
+    <span>SHA-256 5b18c7fdbecd4e21b4d855aaf73633cf081d24ea525044b0794182cc0f9763bb</span>
+  </div>
+  <pre class="source"><code data-source-file="2_train_xgboost.py" data-sha256="5b18c7fdbecd4e21b4d855aaf73633cf081d24ea525044b0794182cc0f9763bb"><span class="tok-comment">#!/usr/bin/env python</span>
+<span class="tok-comment"># -*- coding: utf-8 -*-</span>
+<span class="tok-string">"""
+Step 2: train and evaluate class-weighted three-class XGBoost models.
+
+Purpose
+-------
+Use the ProtBERT feature tables created by ``1_extract_embeddings.py`` to
+classify proteins as structural metal-binding (0), enzymatic metal-binding (1),
+or non-metalloprotein (2).
+
+Input
+-----
+The train, validation, and test CSV paths are supplied with ``--train``,
+``--val``, and ``--test``. These datasets are not bundled with this code sample.
+Every CSV must use the same feature columns and the schema:
+
+    id,label,f0,f1,...,f1023
+
+Training
+--------
+The script computes inverse-frequency sample weights from the training split,
+performs a GPU XGBoost grid search with the ``multi:softprob`` objective, and
+uses validation multiclass log loss for early stopping (500 rounds). Models are
+selected by validation accuracy or macro F1. Accuracy and macro-averaged
+precision, recall, and F1 are reported on validation and test data.
+
+Output
+------
+``--models_dir`` controls the output location. It contains:
+
+    xgb_&lt;hyperparameters&gt;__A&lt;validation_accuracy&gt;__F1&lt;validation_macro_f1&gt;.pkl
+    validation_summary.csv
+    test_summary.csv
+    best_model_test_predictions.csv
+
+Example
+-------
+python 2_train_xgboost.py \
+    --train /path/to/embeddings_3class/raw_pool/train.csv \
+    --val /path/to/embeddings_3class/raw_pool/val.csv \
+    --test /path/to/embeddings_3class/raw_pool/test.csv \
+    --models_dir /path/to/outputs/xgboost_3class_models \
+    --select_metric accuracy
+
+Dependencies
+------------
+XGBoost 3.x with CUDA support, pandas, NumPy, and scikit-learn.
+"""</span>
+
+<span class="tok-keyword">import</span> argparse<span class="tok-operator">,</span> os<span class="tok-operator">,</span> pickle<span class="tok-operator">,</span> re<span class="tok-operator">,</span> sys
+<span class="tok-keyword">from</span> itertools <span class="tok-keyword">import</span> product
+
+<span class="tok-keyword">import</span> numpy <span class="tok-keyword">as</span> np
+<span class="tok-keyword">import</span> pandas <span class="tok-keyword">as</span> pd
+<span class="tok-keyword">from</span> sklearn<span class="tok-operator">.</span>metrics <span class="tok-keyword">import</span> <span class="tok-operator">(</span>accuracy_score<span class="tok-operator">,</span> precision_recall_fscore_support<span class="tok-operator">)</span>
+<span class="tok-keyword">import</span> xgboost <span class="tok-keyword">as</span> xgb
+
+<span class="tok-comment">###############################################################################</span>
+<span class="tok-comment"># Defaults &amp; hyper‑parameter grid                                             #</span>
+<span class="tok-comment">###############################################################################</span>
+
+<span class="tok-constant">DEFAULT_TRAIN_PATH</span>  <span class="tok-operator">=</span> <span class="tok-string">"./train.csv"</span>
+<span class="tok-constant">DEFAULT_VAL_PATH</span>    <span class="tok-operator">=</span> <span class="tok-string">"./val.csv"</span>
+<span class="tok-constant">DEFAULT_TEST_PATH</span>   <span class="tok-operator">=</span> <span class="tok-string">"./test.csv"</span>
+<span class="tok-constant">DEFAULT_MODELS_DIR</span>  <span class="tok-operator">=</span> <span class="tok-string">"./Models"</span>
+
+<span class="tok-constant">USER_PARAM_GRID</span> <span class="tok-operator">=</span> <span class="tok-operator">{</span>
+    <span class="tok-string">"learning_rate"</span><span class="tok-operator">:</span>    <span class="tok-operator">[</span><span class="tok-number">0.001</span><span class="tok-operator">,</span> <span class="tok-number">0.005</span><span class="tok-operator">,</span> <span class="tok-number">0.01</span><span class="tok-operator">]</span><span class="tok-operator">,</span>
+    <span class="tok-string">"max_depth"</span><span class="tok-operator">:</span>        <span class="tok-operator">[</span><span class="tok-number">3</span><span class="tok-operator">,</span> <span class="tok-number">5</span><span class="tok-operator">,</span> <span class="tok-number">7</span><span class="tok-operator">]</span><span class="tok-operator">,</span>
+    <span class="tok-string">"subsample"</span><span class="tok-operator">:</span>        <span class="tok-operator">[</span><span class="tok-number">0.3</span><span class="tok-operator">,</span> <span class="tok-number">0.5</span><span class="tok-operator">,</span> <span class="tok-number">0.7</span><span class="tok-operator">]</span><span class="tok-operator">,</span>
+    <span class="tok-string">"colsample_bytree"</span><span class="tok-operator">:</span> <span class="tok-operator">[</span><span class="tok-number">0.2</span><span class="tok-operator">,</span> <span class="tok-number">0.4</span><span class="tok-operator">,</span> <span class="tok-number">0.6</span><span class="tok-operator">,</span> <span class="tok-number">0.8</span><span class="tok-operator">]</span><span class="tok-operator">,</span>
+    <span class="tok-string">"reg_lambda"</span><span class="tok-operator">:</span>       <span class="tok-operator">[</span><span class="tok-number">0.0</span><span class="tok-operator">,</span> <span class="tok-number">1.0</span><span class="tok-operator">,</span> <span class="tok-number">2.0</span><span class="tok-operator">]</span><span class="tok-operator">,</span>
+<span class="tok-operator">}</span>
+
+<span class="tok-comment"># Early‑stopping &amp; training controls</span>
+<span class="tok-constant">N_ESTIMATORS_MAX</span>      <span class="tok-operator">=</span> <span class="tok-number">100_000_000</span>
+<span class="tok-constant">EARLY_STOP_ROUNDS</span>     <span class="tok-operator">=</span> <span class="tok-number">500</span>
+<span class="tok-constant">RANDOM_STATE</span>          <span class="tok-operator">=</span> <span class="tok-number">42</span>
+<span class="tok-constant">EVAL_METRIC_INTERNAL</span>  <span class="tok-operator">=</span> <span class="tok-string">"mlogloss"</span>
+<span class="tok-constant">SELECT_METRIC_DEFAULT</span> <span class="tok-operator">=</span> <span class="tok-string">"accuracy"</span>      <span class="tok-comment"># or "f1"</span>
+
+<span class="tok-comment">###############################################################################</span>
+<span class="tok-comment"># Utility helpers                                                             #</span>
+<span class="tok-comment">###############################################################################</span>
+
+<span class="tok-keyword">def</span> <span class="tok-definition">ensure_dir</span><span class="tok-operator">(</span>path<span class="tok-operator">:</span> <span class="tok-builtin">str</span><span class="tok-operator">)</span><span class="tok-operator">:</span>
+    <span class="tok-keyword">if</span> <span class="tok-keyword">not</span> os<span class="tok-operator">.</span>path<span class="tok-operator">.</span>exists<span class="tok-operator">(</span>path<span class="tok-operator">)</span><span class="tok-operator">:</span>
+        os<span class="tok-operator">.</span>makedirs<span class="tok-operator">(</span>path<span class="tok-operator">,</span> exist_ok<span class="tok-operator">=</span><span class="tok-keyword">True</span><span class="tok-operator">)</span>
+
+<span class="tok-keyword">def</span> <span class="tok-definition">infer_feature_cols</span><span class="tok-operator">(</span>df<span class="tok-operator">:</span> pd<span class="tok-operator">.</span>DataFrame<span class="tok-operator">)</span><span class="tok-operator">:</span>
+    <span class="tok-keyword">return</span> <span class="tok-builtin">sorted</span><span class="tok-operator">(</span><span class="tok-operator">[</span>c <span class="tok-keyword">for</span> c <span class="tok-keyword">in</span> df<span class="tok-operator">.</span>columns <span class="tok-keyword">if</span> re<span class="tok-operator">.</span>fullmatch<span class="tok-operator">(</span><span class="tok-string">r"f\d+"</span><span class="tok-operator">,</span> c<span class="tok-operator">)</span><span class="tok-operator">]</span><span class="tok-operator">,</span>
+                  key<span class="tok-operator">=</span><span class="tok-keyword">lambda</span> x<span class="tok-operator">:</span> <span class="tok-builtin">int</span><span class="tok-operator">(</span>x<span class="tok-operator">[</span><span class="tok-number">1</span><span class="tok-operator">:</span><span class="tok-operator">]</span><span class="tok-operator">)</span><span class="tok-operator">)</span>
+
+<span class="tok-keyword">def</span> <span class="tok-definition">map_labels_to_int3</span><span class="tok-operator">(</span>s<span class="tok-operator">:</span> pd<span class="tok-operator">.</span>Series<span class="tok-operator">)</span> <span class="tok-operator">-&gt;</span> pd<span class="tok-operator">.</span>Series<span class="tok-operator">:</span>
+    <span class="tok-string">"""
+    Map label column to integers {0,1,2}.
+    Accepts either textual labels ('pos_stru','pos_enz','neg') or numeric 0/1/2.
+    """</span>
+    <span class="tok-keyword">if</span> s<span class="tok-operator">.</span>dtype<span class="tok-operator">.</span>kind <span class="tok-keyword">in</span> <span class="tok-operator">{</span><span class="tok-string">"O"</span><span class="tok-operator">,</span> <span class="tok-string">"U"</span><span class="tok-operator">,</span> <span class="tok-string">"S"</span><span class="tok-operator">}</span><span class="tok-operator">:</span>
+        <span class="tok-keyword">return</span> <span class="tok-operator">(</span>s<span class="tok-operator">.</span>astype<span class="tok-operator">(</span><span class="tok-builtin">str</span><span class="tok-operator">)</span><span class="tok-operator">.</span><span class="tok-builtin">str</span><span class="tok-operator">.</span>strip<span class="tok-operator">(</span><span class="tok-operator">)</span>
+                <span class="tok-operator">.</span><span class="tok-builtin">map</span><span class="tok-operator">(</span><span class="tok-operator">{</span><span class="tok-string">"pos_stru"</span><span class="tok-operator">:</span> <span class="tok-number">0</span><span class="tok-operator">,</span> <span class="tok-string">"pos_enz"</span><span class="tok-operator">:</span> <span class="tok-number">1</span><span class="tok-operator">,</span> <span class="tok-string">"neg"</span><span class="tok-operator">:</span> <span class="tok-number">2</span><span class="tok-operator">,</span>
+                      <span class="tok-string">"0"</span><span class="tok-operator">:</span> <span class="tok-number">0</span><span class="tok-operator">,</span> <span class="tok-string">"1"</span><span class="tok-operator">:</span> <span class="tok-number">1</span><span class="tok-operator">,</span> <span class="tok-string">"2"</span><span class="tok-operator">:</span> <span class="tok-number">2</span><span class="tok-operator">}</span><span class="tok-operator">)</span>
+                <span class="tok-operator">.</span>astype<span class="tok-operator">(</span><span class="tok-builtin">int</span><span class="tok-operator">)</span><span class="tok-operator">)</span>
+    <span class="tok-keyword">return</span> s<span class="tok-operator">.</span>astype<span class="tok-operator">(</span><span class="tok-builtin">int</span><span class="tok-operator">)</span>
+
+<span class="tok-keyword">def</span> <span class="tok-definition">load_split</span><span class="tok-operator">(</span>path<span class="tok-operator">:</span> <span class="tok-builtin">str</span><span class="tok-operator">)</span><span class="tok-operator">:</span>
+    <span class="tok-keyword">if</span> <span class="tok-keyword">not</span> os<span class="tok-operator">.</span>path<span class="tok-operator">.</span>isfile<span class="tok-operator">(</span>path<span class="tok-operator">)</span><span class="tok-operator">:</span>
+        sys<span class="tok-operator">.</span><span class="tok-builtin">exit</span><span class="tok-operator">(</span>f"[ERROR] CSV not found: <span class="tok-operator">{</span>path<span class="tok-operator">}</span>"<span class="tok-operator">)</span>
+    df <span class="tok-operator">=</span> pd<span class="tok-operator">.</span>read_csv<span class="tok-operator">(</span>path<span class="tok-operator">)</span>
+    df<span class="tok-operator">.</span>columns <span class="tok-operator">=</span> <span class="tok-operator">[</span>c<span class="tok-operator">.</span>strip<span class="tok-operator">(</span><span class="tok-operator">)</span> <span class="tok-keyword">for</span> c <span class="tok-keyword">in</span> df<span class="tok-operator">.</span>columns<span class="tok-operator">]</span>
+
+    feat_cols <span class="tok-operator">=</span> infer_feature_cols<span class="tok-operator">(</span>df<span class="tok-operator">)</span>
+    df<span class="tok-operator">[</span><span class="tok-string">"label"</span><span class="tok-operator">]</span> <span class="tok-operator">=</span> map_labels_to_int3<span class="tok-operator">(</span>df<span class="tok-operator">[</span><span class="tok-string">"label"</span><span class="tok-operator">]</span><span class="tok-operator">)</span>
+    df<span class="tok-operator">.</span>dropna<span class="tok-operator">(</span>subset<span class="tok-operator">=</span><span class="tok-operator">[</span><span class="tok-string">"label"</span><span class="tok-operator">]</span> <span class="tok-operator">+</span> feat_cols<span class="tok-operator">,</span> inplace<span class="tok-operator">=</span><span class="tok-keyword">True</span><span class="tok-operator">)</span>
+
+    <span class="tok-constant">X</span> <span class="tok-operator">=</span> df<span class="tok-operator">[</span>feat_cols<span class="tok-operator">]</span><span class="tok-operator">.</span>astype<span class="tok-operator">(</span>np<span class="tok-operator">.</span>float32<span class="tok-operator">)</span><span class="tok-operator">.</span>values
+    y <span class="tok-operator">=</span> df<span class="tok-operator">[</span><span class="tok-string">"label"</span><span class="tok-operator">]</span><span class="tok-operator">.</span>values
+    ids <span class="tok-operator">=</span> df<span class="tok-operator">[</span><span class="tok-string">"id"</span><span class="tok-operator">]</span><span class="tok-operator">.</span>astype<span class="tok-operator">(</span><span class="tok-builtin">str</span><span class="tok-operator">)</span> <span class="tok-keyword">if</span> <span class="tok-string">"id"</span> <span class="tok-keyword">in</span> df<span class="tok-operator">.</span>columns <span class="tok-keyword">else</span> pd<span class="tok-operator">.</span>Series<span class="tok-operator">(</span><span class="tok-builtin">range</span><span class="tok-operator">(</span><span class="tok-builtin">len</span><span class="tok-operator">(</span>df<span class="tok-operator">)</span><span class="tok-operator">)</span><span class="tok-operator">,</span> name<span class="tok-operator">=</span><span class="tok-string">"id"</span><span class="tok-operator">)</span>
+    <span class="tok-keyword">return</span> <span class="tok-constant">X</span><span class="tok-operator">,</span> y<span class="tok-operator">,</span> ids
+
+<span class="tok-keyword">def</span> <span class="tok-definition">compute_metrics</span><span class="tok-operator">(</span>y_true<span class="tok-operator">,</span> y_pred<span class="tok-operator">)</span><span class="tok-operator">:</span>
+    <span class="tok-constant">A</span> <span class="tok-operator">=</span> accuracy_score<span class="tok-operator">(</span>y_true<span class="tok-operator">,</span> y_pred<span class="tok-operator">)</span>
+    <span class="tok-constant">P</span><span class="tok-operator">,</span> <span class="tok-constant">R</span><span class="tok-operator">,</span> <span class="tok-constant">F1</span><span class="tok-operator">,</span> _ <span class="tok-operator">=</span> precision_recall_fscore_support<span class="tok-operator">(</span>
+        y_true<span class="tok-operator">,</span> y_pred<span class="tok-operator">,</span> average<span class="tok-operator">=</span><span class="tok-string">"macro"</span><span class="tok-operator">,</span> zero_division<span class="tok-operator">=</span><span class="tok-number">0</span>
+    <span class="tok-operator">)</span>
+    <span class="tok-keyword">return</span> <span class="tok-operator">{</span><span class="tok-string">"A"</span><span class="tok-operator">:</span> <span class="tok-constant">A</span><span class="tok-operator">,</span> <span class="tok-string">"P"</span><span class="tok-operator">:</span> <span class="tok-constant">P</span><span class="tok-operator">,</span> <span class="tok-string">"R"</span><span class="tok-operator">:</span> <span class="tok-constant">R</span><span class="tok-operator">,</span> <span class="tok-string">"F1"</span><span class="tok-operator">:</span> <span class="tok-constant">F1</span><span class="tok-operator">}</span>
+
+<span class="tok-keyword">def</span> <span class="tok-definition">metrics_to_str</span><span class="tok-operator">(</span>m<span class="tok-operator">)</span><span class="tok-operator">:</span>
+    <span class="tok-keyword">return</span> f"A=<span class="tok-operator">{</span>m<span class="tok-operator">[</span><span class="tok-string">'A'</span><span class="tok-operator">]</span><span class="tok-operator">:</span>.4f<span class="tok-operator">}</span> P=<span class="tok-operator">{</span>m<span class="tok-operator">[</span><span class="tok-string">'P'</span><span class="tok-operator">]</span><span class="tok-operator">:</span>.4f<span class="tok-operator">}</span> R=<span class="tok-operator">{</span>m<span class="tok-operator">[</span><span class="tok-string">'R'</span><span class="tok-operator">]</span><span class="tok-operator">:</span>.4f<span class="tok-operator">}</span> F1=<span class="tok-operator">{</span>m<span class="tok-operator">[</span><span class="tok-string">'F1'</span><span class="tok-operator">]</span><span class="tok-operator">:</span>.4f<span class="tok-operator">}</span>"
+
+<span class="tok-keyword">def</span> <span class="tok-definition">param_dict_to_name</span><span class="tok-operator">(</span>params<span class="tok-operator">,</span> val_metrics<span class="tok-operator">)</span><span class="tok-operator">:</span>
+    parts <span class="tok-operator">=</span> <span class="tok-operator">[</span>f"<span class="tok-operator">{</span>k<span class="tok-operator">}</span>-<span class="tok-operator">{</span><span class="tok-builtin">str</span><span class="tok-operator">(</span>v<span class="tok-operator">)</span><span class="tok-operator">.</span>replace<span class="tok-operator">(</span><span class="tok-string">'.'</span><span class="tok-operator">,</span> <span class="tok-string">'p'</span><span class="tok-operator">)</span><span class="tok-operator">}</span>" <span class="tok-keyword">for</span> k<span class="tok-operator">,</span> v <span class="tok-keyword">in</span> <span class="tok-builtin">sorted</span><span class="tok-operator">(</span>params<span class="tok-operator">.</span>items<span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">)</span><span class="tok-operator">]</span>
+    parts<span class="tok-operator">.</span>append<span class="tok-operator">(</span>f"A<span class="tok-operator">{</span>val_metrics<span class="tok-operator">[</span><span class="tok-string">'A'</span><span class="tok-operator">]</span><span class="tok-operator">:</span>.4f<span class="tok-operator">}</span>"<span class="tok-operator">)</span>
+    parts<span class="tok-operator">.</span>append<span class="tok-operator">(</span>f"F1<span class="tok-operator">{</span>val_metrics<span class="tok-operator">[</span><span class="tok-string">'F1'</span><span class="tok-operator">]</span><span class="tok-operator">:</span>.4f<span class="tok-operator">}</span>"<span class="tok-operator">)</span>
+    fname <span class="tok-operator">=</span> <span class="tok-string">"xgb_"</span> <span class="tok-operator">+</span> <span class="tok-string">"__"</span><span class="tok-operator">.</span>join<span class="tok-operator">(</span>parts<span class="tok-operator">)</span> <span class="tok-operator">+</span> <span class="tok-string">".pkl"</span>
+    <span class="tok-keyword">return</span> fname<span class="tok-operator">[</span><span class="tok-operator">:</span><span class="tok-number">240</span><span class="tok-operator">]</span> <span class="tok-operator">+</span> <span class="tok-string">".pkl"</span> <span class="tok-keyword">if</span> <span class="tok-builtin">len</span><span class="tok-operator">(</span>fname<span class="tok-operator">)</span> <span class="tok-operator">&gt;</span> <span class="tok-number">255</span> <span class="tok-keyword">else</span> fname
+
+<span class="tok-comment">###############################################################################</span>
+<span class="tok-comment"># Grid builder &amp; single‑fit routine                                           #</span>
+<span class="tok-comment">###############################################################################</span>
+
+<span class="tok-keyword">def</span> <span class="tok-definition">build_param_grid</span><span class="tok-operator">(</span>grid_dict<span class="tok-operator">)</span><span class="tok-operator">:</span>
+    keys <span class="tok-operator">=</span> <span class="tok-builtin">list</span><span class="tok-operator">(</span>grid_dict<span class="tok-operator">.</span>keys<span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">)</span>
+    <span class="tok-keyword">for</span> vals <span class="tok-keyword">in</span> product<span class="tok-operator">(</span><span class="tok-operator">*</span><span class="tok-operator">(</span>grid_dict<span class="tok-operator">[</span>k<span class="tok-operator">]</span> <span class="tok-keyword">for</span> k <span class="tok-keyword">in</span> keys<span class="tok-operator">)</span><span class="tok-operator">)</span><span class="tok-operator">:</span>
+        <span class="tok-keyword">yield</span> <span class="tok-builtin">dict</span><span class="tok-operator">(</span><span class="tok-builtin">zip</span><span class="tok-operator">(</span>keys<span class="tok-operator">,</span> vals<span class="tok-operator">)</span><span class="tok-operator">)</span>
+
+<span class="tok-comment"># CHANGE signature to receive n_classes</span>
+<span class="tok-keyword">def</span> <span class="tok-definition">fit_and_validate</span><span class="tok-operator">(</span>param_set<span class="tok-operator">,</span> X_tr<span class="tok-operator">,</span> y_tr<span class="tok-operator">,</span> X_val<span class="tok-operator">,</span> y_val<span class="tok-operator">,</span> sample_weight<span class="tok-operator">,</span> n_classes<span class="tok-operator">)</span><span class="tok-operator">:</span>
+    <span class="tok-string">"""Train one XGBClassifier using XGBoost 3.x early-stopping API (multiclass)."""</span>
+    model <span class="tok-operator">=</span> xgb<span class="tok-operator">.</span>XGBClassifier<span class="tok-operator">(</span>
+        objective<span class="tok-operator">=</span><span class="tok-string">"multi:softprob"</span><span class="tok-operator">,</span>   <span class="tok-comment"># &lt;- multiclass probabilities</span>
+        num_class<span class="tok-operator">=</span>n_classes<span class="tok-operator">,</span>          <span class="tok-comment"># &lt;- IMPORTANT for multiclass</span>
+        tree_method<span class="tok-operator">=</span><span class="tok-string">"hist"</span><span class="tok-operator">,</span>
+        device<span class="tok-operator">=</span><span class="tok-string">"cuda"</span><span class="tok-operator">,</span>
+        n_estimators<span class="tok-operator">=</span><span class="tok-constant">N_ESTIMATORS_MAX</span><span class="tok-operator">,</span>
+        early_stopping_rounds<span class="tok-operator">=</span><span class="tok-constant">EARLY_STOP_ROUNDS</span><span class="tok-operator">,</span>
+        random_state<span class="tok-operator">=</span><span class="tok-constant">RANDOM_STATE</span><span class="tok-operator">,</span>
+        eval_metric<span class="tok-operator">=</span><span class="tok-constant">EVAL_METRIC_INTERNAL</span><span class="tok-operator">,</span>
+        <span class="tok-operator">**</span>param_set<span class="tok-operator">,</span>
+    <span class="tok-operator">)</span>
+
+    model<span class="tok-operator">.</span>fit<span class="tok-operator">(</span>
+        X_tr<span class="tok-operator">,</span> y_tr<span class="tok-operator">,</span>
+        sample_weight<span class="tok-operator">=</span>sample_weight<span class="tok-operator">,</span>
+        eval_set<span class="tok-operator">=</span><span class="tok-operator">[</span><span class="tok-operator">(</span>X_val<span class="tok-operator">,</span> y_val<span class="tok-operator">)</span><span class="tok-operator">]</span><span class="tok-operator">,</span>
+        verbose<span class="tok-operator">=</span><span class="tok-keyword">False</span><span class="tok-operator">,</span>
+    <span class="tok-operator">)</span>
+
+    best_iter <span class="tok-operator">=</span> model<span class="tok-operator">.</span>best_iteration <span class="tok-keyword">or</span> model<span class="tok-operator">.</span>n_estimators
+    y_pred <span class="tok-operator">=</span> model<span class="tok-operator">.</span>predict<span class="tok-operator">(</span>X_val<span class="tok-operator">,</span> iteration_range<span class="tok-operator">=</span><span class="tok-operator">(</span><span class="tok-number">0</span><span class="tok-operator">,</span> best_iter <span class="tok-operator">+</span> <span class="tok-number">1</span><span class="tok-operator">)</span><span class="tok-operator">)</span>
+    mets   <span class="tok-operator">=</span> compute_metrics<span class="tok-operator">(</span>y_val<span class="tok-operator">,</span> y_pred<span class="tok-operator">)</span>
+    <span class="tok-keyword">return</span> model<span class="tok-operator">,</span> mets<span class="tok-operator">,</span> best_iter
+
+
+<span class="tok-comment">###############################################################################</span>
+<span class="tok-comment"># Grid‑search loop                                                            #</span>
+<span class="tok-comment">###############################################################################</span>
+
+<span class="tok-keyword">def</span> <span class="tok-definition">train_and_validate_all</span><span class="tok-operator">(</span>grid_iter<span class="tok-operator">,</span> X_tr<span class="tok-operator">,</span> y_tr<span class="tok-operator">,</span> X_val<span class="tok-operator">,</span> y_val<span class="tok-operator">,</span>
+                           models_dir<span class="tok-operator">,</span> select_metric<span class="tok-operator">,</span>
+                           sample_weight<span class="tok-operator">,</span> n_classes<span class="tok-operator">)</span><span class="tok-operator">:</span>
+    ensure_dir<span class="tok-operator">(</span>models_dir<span class="tok-operator">)</span>
+    results<span class="tok-operator">,</span> best_score <span class="tok-operator">=</span> <span class="tok-operator">[</span><span class="tok-operator">]</span><span class="tok-operator">,</span> <span class="tok-operator">-</span>np<span class="tok-operator">.</span>inf
+    best_meta <span class="tok-operator">=</span> <span class="tok-operator">{</span><span class="tok-operator">}</span>
+
+    <span class="tok-keyword">for</span> i<span class="tok-operator">,</span> params <span class="tok-keyword">in</span> <span class="tok-builtin">enumerate</span><span class="tok-operator">(</span>grid_iter<span class="tok-operator">,</span> start<span class="tok-operator">=</span><span class="tok-number">1</span><span class="tok-operator">)</span><span class="tok-operator">:</span>
+        <span class="tok-builtin">print</span><span class="tok-operator">(</span>f"[<span class="tok-operator">{</span>i<span class="tok-operator">}</span>] Params: <span class="tok-operator">{</span>params<span class="tok-operator">}</span>"<span class="tok-operator">)</span>
+        model<span class="tok-operator">,</span> mets<span class="tok-operator">,</span> rounds_used <span class="tok-operator">=</span> fit_and_validate<span class="tok-operator">(</span>
+            params<span class="tok-operator">,</span> X_tr<span class="tok-operator">,</span> y_tr<span class="tok-operator">,</span> X_val<span class="tok-operator">,</span> y_val<span class="tok-operator">,</span>
+            sample_weight<span class="tok-operator">,</span> n_classes
+        <span class="tok-operator">)</span>
+        <span class="tok-builtin">print</span><span class="tok-operator">(</span>f"    Val: <span class="tok-operator">{</span>metrics_to_str<span class="tok-operator">(</span>mets<span class="tok-operator">)</span><span class="tok-operator">}</span>  |  Early stop at round <span class="tok-operator">{</span>rounds_used<span class="tok-operator">}</span>"<span class="tok-operator">)</span>
+
+        score <span class="tok-operator">=</span> mets<span class="tok-operator">[</span><span class="tok-string">"A"</span><span class="tok-operator">]</span> <span class="tok-keyword">if</span> select_metric <span class="tok-operator">==</span> <span class="tok-string">"accuracy"</span> <span class="tok-keyword">else</span> mets<span class="tok-operator">[</span><span class="tok-string">"F1"</span><span class="tok-operator">]</span>
+        model_path <span class="tok-operator">=</span> os<span class="tok-operator">.</span>path<span class="tok-operator">.</span>join<span class="tok-operator">(</span>models_dir<span class="tok-operator">,</span> param_dict_to_name<span class="tok-operator">(</span>params<span class="tok-operator">,</span> mets<span class="tok-operator">)</span><span class="tok-operator">)</span>
+        <span class="tok-keyword">with</span> <span class="tok-builtin">open</span><span class="tok-operator">(</span>model_path<span class="tok-operator">,</span> <span class="tok-string">"wb"</span><span class="tok-operator">)</span> <span class="tok-keyword">as</span> f<span class="tok-operator">:</span>
+            pickle<span class="tok-operator">.</span>dump<span class="tok-operator">(</span>model<span class="tok-operator">,</span> f<span class="tok-operator">)</span>
+        <span class="tok-builtin">print</span><span class="tok-operator">(</span>f"    Saved: <span class="tok-operator">{</span>model_path<span class="tok-operator">}</span>"<span class="tok-operator">)</span>
+
+        result_row <span class="tok-operator">=</span> <span class="tok-operator">{</span><span class="tok-operator">**</span>params<span class="tok-operator">,</span>
+                      <span class="tok-string">"val_A"</span><span class="tok-operator">:</span> mets<span class="tok-operator">[</span><span class="tok-string">"A"</span><span class="tok-operator">]</span><span class="tok-operator">,</span> <span class="tok-string">"val_P"</span><span class="tok-operator">:</span> mets<span class="tok-operator">[</span><span class="tok-string">"P"</span><span class="tok-operator">]</span><span class="tok-operator">,</span>
+                      <span class="tok-string">"val_R"</span><span class="tok-operator">:</span> mets<span class="tok-operator">[</span><span class="tok-string">"R"</span><span class="tok-operator">]</span><span class="tok-operator">,</span> <span class="tok-string">"val_F1"</span><span class="tok-operator">:</span> mets<span class="tok-operator">[</span><span class="tok-string">"F1"</span><span class="tok-operator">]</span><span class="tok-operator">,</span>
+                      <span class="tok-string">"best_iteration"</span><span class="tok-operator">:</span> rounds_used<span class="tok-operator">,</span>
+                      <span class="tok-string">"model_path"</span><span class="tok-operator">:</span> model_path<span class="tok-operator">}</span>
+        results<span class="tok-operator">.</span>append<span class="tok-operator">(</span>result_row<span class="tok-operator">)</span>
+
+        <span class="tok-keyword">if</span> score <span class="tok-operator">&gt;</span> best_score<span class="tok-operator">:</span>
+            best_score<span class="tok-operator">,</span> best_meta <span class="tok-operator">=</span> score<span class="tok-operator">,</span> result_row
+            <span class="tok-builtin">print</span><span class="tok-operator">(</span>f"    &gt;&gt;&gt; New BEST so far (<span class="tok-operator">{</span>select_metric<span class="tok-operator">}</span>=<span class="tok-operator">{</span>best_score<span class="tok-operator">:</span>.4f<span class="tok-operator">}</span>)!"<span class="tok-operator">)</span>
+        <span class="tok-keyword">else</span><span class="tok-operator">:</span>
+            <span class="tok-builtin">print</span><span class="tok-operator">(</span>f"    (No improvement. Best remains <span class="tok-operator">{</span>select_metric<span class="tok-operator">}</span>=<span class="tok-operator">{</span>best_score<span class="tok-operator">:</span>.4f<span class="tok-operator">}</span>)"<span class="tok-operator">)</span>
+        <span class="tok-builtin">print</span><span class="tok-operator">(</span><span class="tok-operator">)</span>
+
+    <span class="tok-keyword">return</span> results<span class="tok-operator">,</span> best_meta<span class="tok-operator">[</span><span class="tok-string">"model_path"</span><span class="tok-operator">]</span>
+
+<span class="tok-comment">###############################################################################</span>
+<span class="tok-comment"># Test evaluation helpers                                                     #</span>
+<span class="tok-comment">###############################################################################</span>
+
+<span class="tok-keyword">def</span> <span class="tok-definition">load_model</span><span class="tok-operator">(</span>path<span class="tok-operator">)</span><span class="tok-operator">:</span>
+    <span class="tok-keyword">with</span> <span class="tok-builtin">open</span><span class="tok-operator">(</span>path<span class="tok-operator">,</span> <span class="tok-string">"rb"</span><span class="tok-operator">)</span> <span class="tok-keyword">as</span> f<span class="tok-operator">:</span>
+        <span class="tok-keyword">return</span> pickle<span class="tok-operator">.</span>load<span class="tok-operator">(</span>f<span class="tok-operator">)</span>
+
+<span class="tok-keyword">def</span> <span class="tok-definition">predict_best</span><span class="tok-operator">(</span>model<span class="tok-operator">,</span> <span class="tok-constant">X</span><span class="tok-operator">)</span><span class="tok-operator">:</span>
+    best_iter <span class="tok-operator">=</span> model<span class="tok-operator">.</span>best_iteration <span class="tok-keyword">or</span> model<span class="tok-operator">.</span>n_estimators
+    <span class="tok-keyword">return</span> model<span class="tok-operator">.</span>predict<span class="tok-operator">(</span><span class="tok-constant">X</span><span class="tok-operator">,</span> iteration_range<span class="tok-operator">=</span><span class="tok-operator">(</span><span class="tok-number">0</span><span class="tok-operator">,</span> best_iter <span class="tok-operator">+</span> <span class="tok-number">1</span><span class="tok-operator">)</span><span class="tok-operator">)</span>
+
+<span class="tok-keyword">def</span> <span class="tok-definition">evaluate_model</span><span class="tok-operator">(</span>model<span class="tok-operator">,</span> <span class="tok-constant">X</span><span class="tok-operator">,</span> y<span class="tok-operator">)</span><span class="tok-operator">:</span>
+    <span class="tok-keyword">return</span> compute_metrics<span class="tok-operator">(</span>y<span class="tok-operator">,</span> predict_best<span class="tok-operator">(</span>model<span class="tok-operator">,</span> <span class="tok-constant">X</span><span class="tok-operator">)</span><span class="tok-operator">)</span>
+
+<span class="tok-keyword">def</span> <span class="tok-definition">evaluate_all_models</span><span class="tok-operator">(</span>models_dir<span class="tok-operator">,</span> X_test<span class="tok-operator">,</span> y_test<span class="tok-operator">)</span><span class="tok-operator">:</span>
+    rows <span class="tok-operator">=</span> <span class="tok-operator">[</span><span class="tok-operator">]</span>
+    <span class="tok-keyword">for</span> fname <span class="tok-keyword">in</span> <span class="tok-builtin">sorted</span><span class="tok-operator">(</span>os<span class="tok-operator">.</span>listdir<span class="tok-operator">(</span>models_dir<span class="tok-operator">)</span><span class="tok-operator">)</span><span class="tok-operator">:</span>
+        <span class="tok-keyword">if</span> fname<span class="tok-operator">.</span>endswith<span class="tok-operator">(</span><span class="tok-string">".pkl"</span><span class="tok-operator">)</span><span class="tok-operator">:</span>
+            m <span class="tok-operator">=</span> load_model<span class="tok-operator">(</span>os<span class="tok-operator">.</span>path<span class="tok-operator">.</span>join<span class="tok-operator">(</span>models_dir<span class="tok-operator">,</span> fname<span class="tok-operator">)</span><span class="tok-operator">)</span>
+            mets <span class="tok-operator">=</span> evaluate_model<span class="tok-operator">(</span>m<span class="tok-operator">,</span> X_test<span class="tok-operator">,</span> y_test<span class="tok-operator">)</span>
+            rows<span class="tok-operator">.</span>append<span class="tok-operator">(</span><span class="tok-operator">{</span><span class="tok-string">"model"</span><span class="tok-operator">:</span> fname<span class="tok-operator">,</span>
+                         <span class="tok-string">"test_A"</span><span class="tok-operator">:</span> mets<span class="tok-operator">[</span><span class="tok-string">"A"</span><span class="tok-operator">]</span><span class="tok-operator">,</span> <span class="tok-string">"test_P"</span><span class="tok-operator">:</span> mets<span class="tok-operator">[</span><span class="tok-string">"P"</span><span class="tok-operator">]</span><span class="tok-operator">,</span>
+                         <span class="tok-string">"test_R"</span><span class="tok-operator">:</span> mets<span class="tok-operator">[</span><span class="tok-string">"R"</span><span class="tok-operator">]</span><span class="tok-operator">,</span> <span class="tok-string">"test_F1"</span><span class="tok-operator">:</span> mets<span class="tok-operator">[</span><span class="tok-string">"F1"</span><span class="tok-operator">]</span><span class="tok-operator">}</span><span class="tok-operator">)</span>
+    <span class="tok-keyword">return</span> pd<span class="tok-operator">.</span>DataFrame<span class="tok-operator">(</span>rows<span class="tok-operator">)</span><span class="tok-operator">.</span>sort_values<span class="tok-operator">(</span><span class="tok-operator">[</span><span class="tok-string">"test_A"</span><span class="tok-operator">,</span> <span class="tok-string">"test_F1"</span><span class="tok-operator">]</span><span class="tok-operator">,</span> ascending<span class="tok-operator">=</span><span class="tok-keyword">False</span><span class="tok-operator">)</span>
+
+<span class="tok-keyword">def</span> <span class="tok-definition">save_predictions</span><span class="tok-operator">(</span>model<span class="tok-operator">,</span> <span class="tok-constant">X</span><span class="tok-operator">,</span> ids<span class="tok-operator">,</span> out_csv<span class="tok-operator">)</span><span class="tok-operator">:</span>
+    preds <span class="tok-operator">=</span> predict_best<span class="tok-operator">(</span>model<span class="tok-operator">,</span> <span class="tok-constant">X</span><span class="tok-operator">)</span>
+    pd<span class="tok-operator">.</span>DataFrame<span class="tok-operator">(</span><span class="tok-operator">{</span><span class="tok-string">"id"</span><span class="tok-operator">:</span> ids<span class="tok-operator">,</span> <span class="tok-string">"prediction"</span><span class="tok-operator">:</span> preds<span class="tok-operator">}</span><span class="tok-operator">)</span><span class="tok-operator">.</span>to_csv<span class="tok-operator">(</span>out_csv<span class="tok-operator">,</span> index<span class="tok-operator">=</span><span class="tok-keyword">False</span><span class="tok-operator">)</span>
+
+<span class="tok-comment">###############################################################################</span>
+<span class="tok-comment"># CLI                                                                         #</span>
+<span class="tok-comment">###############################################################################</span>
+
+<span class="tok-keyword">def</span> <span class="tok-definition">parse_args</span><span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">:</span>
+    p <span class="tok-operator">=</span> argparse<span class="tok-operator">.</span>ArgumentParser<span class="tok-operator">(</span>description<span class="tok-operator">=</span><span class="tok-string">"GPU XGBoost 3.x grid search with early stopping."</span><span class="tok-operator">)</span>
+    p<span class="tok-operator">.</span>add_argument<span class="tok-operator">(</span><span class="tok-string">"--train"</span><span class="tok-operator">,</span> default<span class="tok-operator">=</span><span class="tok-constant">DEFAULT_TRAIN_PATH</span><span class="tok-operator">)</span>
+    p<span class="tok-operator">.</span>add_argument<span class="tok-operator">(</span><span class="tok-string">"--val"</span><span class="tok-operator">,</span>   default<span class="tok-operator">=</span><span class="tok-constant">DEFAULT_VAL_PATH</span><span class="tok-operator">)</span>
+    p<span class="tok-operator">.</span>add_argument<span class="tok-operator">(</span><span class="tok-string">"--test"</span><span class="tok-operator">,</span>  default<span class="tok-operator">=</span><span class="tok-constant">DEFAULT_TEST_PATH</span><span class="tok-operator">)</span>
+    p<span class="tok-operator">.</span>add_argument<span class="tok-operator">(</span><span class="tok-string">"--models_dir"</span><span class="tok-operator">,</span> default<span class="tok-operator">=</span><span class="tok-constant">DEFAULT_MODELS_DIR</span><span class="tok-operator">)</span>
+    p<span class="tok-operator">.</span>add_argument<span class="tok-operator">(</span><span class="tok-string">"--select_metric"</span><span class="tok-operator">,</span> choices<span class="tok-operator">=</span><span class="tok-operator">[</span><span class="tok-string">"accuracy"</span><span class="tok-operator">,</span> <span class="tok-string">"f1"</span><span class="tok-operator">]</span><span class="tok-operator">,</span>
+                   default<span class="tok-operator">=</span><span class="tok-constant">SELECT_METRIC_DEFAULT</span><span class="tok-operator">,</span>
+                   <span class="tok-builtin">help</span><span class="tok-operator">=</span><span class="tok-string">"Metric for best‑model selection"</span><span class="tok-operator">)</span>
+    <span class="tok-keyword">return</span> p<span class="tok-operator">.</span>parse_args<span class="tok-operator">(</span><span class="tok-operator">)</span>
+
+<span class="tok-comment">###############################################################################</span>
+<span class="tok-comment"># main                                                                        #</span>
+<span class="tok-comment">###############################################################################</span>
+
+<span class="tok-keyword">def</span> <span class="tok-definition">main</span><span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">:</span>
+    args <span class="tok-operator">=</span> parse_args<span class="tok-operator">(</span><span class="tok-operator">)</span>
+    ensure_dir<span class="tok-operator">(</span>args<span class="tok-operator">.</span>models_dir<span class="tok-operator">)</span>
+
+    <span class="tok-builtin">print</span><span class="tok-operator">(</span><span class="tok-string">"=== Loading data ==="</span><span class="tok-operator">)</span>
+    X_tr<span class="tok-operator">,</span> y_tr<span class="tok-operator">,</span> _   <span class="tok-operator">=</span> load_split<span class="tok-operator">(</span>args<span class="tok-operator">.</span>train<span class="tok-operator">)</span>
+    X_val<span class="tok-operator">,</span> y_val<span class="tok-operator">,</span> _ <span class="tok-operator">=</span> load_split<span class="tok-operator">(</span>args<span class="tok-operator">.</span>val<span class="tok-operator">)</span>
+    X_te<span class="tok-operator">,</span>  y_te<span class="tok-operator">,</span> ids_te <span class="tok-operator">=</span> load_split<span class="tok-operator">(</span>args<span class="tok-operator">.</span>test<span class="tok-operator">)</span>
+    <span class="tok-builtin">print</span><span class="tok-operator">(</span>f"Train: <span class="tok-operator">{</span>X_tr<span class="tok-operator">.</span>shape<span class="tok-operator">}</span>, Val: <span class="tok-operator">{</span>X_val<span class="tok-operator">.</span>shape<span class="tok-operator">}</span>, Test: <span class="tok-operator">{</span>X_te<span class="tok-operator">.</span>shape<span class="tok-operator">}</span>\n"<span class="tok-operator">)</span>
+
+    <span class="tok-comment"># === Compute &amp; display class distribution, then derive per‑sample weights ===</span>
+    unique<span class="tok-operator">,</span> counts <span class="tok-operator">=</span> np<span class="tok-operator">.</span>unique<span class="tok-operator">(</span>y_tr<span class="tok-operator">,</span> return_counts<span class="tok-operator">=</span><span class="tok-keyword">True</span><span class="tok-operator">)</span>
+    class_counts <span class="tok-operator">=</span> <span class="tok-operator">{</span><span class="tok-builtin">int</span><span class="tok-operator">(</span>cls<span class="tok-operator">)</span><span class="tok-operator">:</span> <span class="tok-builtin">int</span><span class="tok-operator">(</span>cnt<span class="tok-operator">)</span> <span class="tok-keyword">for</span> cls<span class="tok-operator">,</span> cnt <span class="tok-keyword">in</span> <span class="tok-builtin">zip</span><span class="tok-operator">(</span>unique<span class="tok-operator">,</span> counts<span class="tok-operator">)</span><span class="tok-operator">}</span>
+    <span class="tok-builtin">print</span><span class="tok-operator">(</span><span class="tok-string">"=== Training class distribution ==="</span><span class="tok-operator">)</span>
+    <span class="tok-keyword">for</span> cls<span class="tok-operator">,</span> cnt <span class="tok-keyword">in</span> class_counts<span class="tok-operator">.</span>items<span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">:</span>
+        <span class="tok-builtin">print</span><span class="tok-operator">(</span>f"Class <span class="tok-operator">{</span>cls<span class="tok-operator">}</span>: <span class="tok-operator">{</span>cnt<span class="tok-operator">}</span> samples"<span class="tok-operator">)</span>
+    n_samples  <span class="tok-operator">=</span> <span class="tok-builtin">len</span><span class="tok-operator">(</span>y_tr<span class="tok-operator">)</span>
+    n_classes  <span class="tok-operator">=</span> <span class="tok-builtin">len</span><span class="tok-operator">(</span>class_counts<span class="tok-operator">)</span>
+    class_weight <span class="tok-operator">=</span> <span class="tok-operator">{</span>cls<span class="tok-operator">:</span> n_samples <span class="tok-operator">/</span> <span class="tok-operator">(</span>n_classes <span class="tok-operator">*</span> cnt<span class="tok-operator">)</span> <span class="tok-keyword">for</span> cls<span class="tok-operator">,</span> cnt <span class="tok-keyword">in</span> class_counts<span class="tok-operator">.</span>items<span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">}</span>
+    sample_weight_tr <span class="tok-operator">=</span> np<span class="tok-operator">.</span>vectorize<span class="tok-operator">(</span>class_weight<span class="tok-operator">.</span>get<span class="tok-operator">)</span><span class="tok-operator">(</span>y_tr<span class="tok-operator">)</span>
+
+    grid_iter <span class="tok-operator">=</span> build_param_grid<span class="tok-operator">(</span><span class="tok-constant">USER_PARAM_GRID</span><span class="tok-operator">)</span>
+    <span class="tok-builtin">print</span><span class="tok-operator">(</span>f"Total combinations: <span class="tok-operator">{</span>np<span class="tok-operator">.</span>prod<span class="tok-operator">(</span><span class="tok-operator">[</span><span class="tok-builtin">len</span><span class="tok-operator">(</span>v<span class="tok-operator">)</span> <span class="tok-keyword">for</span> v <span class="tok-keyword">in</span> <span class="tok-constant">USER_PARAM_GRID</span><span class="tok-operator">.</span>values<span class="tok-operator">(</span><span class="tok-operator">)</span><span class="tok-operator">]</span><span class="tok-operator">)</span><span class="tok-operator">}</span>\n"<span class="tok-operator">)</span>
+
+    results<span class="tok-operator">,</span> best_model_path <span class="tok-operator">=</span> train_and_validate_all<span class="tok-operator">(</span>
+        grid_iter<span class="tok-operator">,</span> X_tr<span class="tok-operator">,</span> y_tr<span class="tok-operator">,</span> X_val<span class="tok-operator">,</span> y_val<span class="tok-operator">,</span>
+        models_dir<span class="tok-operator">=</span>args<span class="tok-operator">.</span>models_dir<span class="tok-operator">,</span>
+        select_metric<span class="tok-operator">=</span>args<span class="tok-operator">.</span>select_metric<span class="tok-operator">,</span>
+        sample_weight<span class="tok-operator">=</span>sample_weight_tr<span class="tok-operator">,</span>
+        n_classes<span class="tok-operator">=</span>n_classes
+    <span class="tok-operator">)</span>
+
+    <span class="tok-comment"># Validation summary</span>
+    val_csv <span class="tok-operator">=</span> os<span class="tok-operator">.</span>path<span class="tok-operator">.</span>join<span class="tok-operator">(</span>args<span class="tok-operator">.</span>models_dir<span class="tok-operator">,</span> <span class="tok-string">"validation_summary.csv"</span><span class="tok-operator">)</span>
+    pd<span class="tok-operator">.</span>DataFrame<span class="tok-operator">(</span>results<span class="tok-operator">)</span><span class="tok-operator">.</span>to_csv<span class="tok-operator">(</span>val_csv<span class="tok-operator">,</span> index<span class="tok-operator">=</span><span class="tok-keyword">False</span><span class="tok-operator">)</span>
+    <span class="tok-builtin">print</span><span class="tok-operator">(</span>f"Validation summary written to: <span class="tok-operator">{</span>val_csv<span class="tok-operator">}</span>"<span class="tok-operator">)</span>
+
+    <span class="tok-comment"># Test evaluation</span>
+    <span class="tok-builtin">print</span><span class="tok-operator">(</span><span class="tok-string">"\n=== Evaluating saved models on TEST ==="</span><span class="tok-operator">)</span>
+    test_df <span class="tok-operator">=</span> evaluate_all_models<span class="tok-operator">(</span>args<span class="tok-operator">.</span>models_dir<span class="tok-operator">,</span> X_te<span class="tok-operator">,</span> y_te<span class="tok-operator">)</span>
+    test_csv <span class="tok-operator">=</span> os<span class="tok-operator">.</span>path<span class="tok-operator">.</span>join<span class="tok-operator">(</span>args<span class="tok-operator">.</span>models_dir<span class="tok-operator">,</span> <span class="tok-string">"test_summary.csv"</span><span class="tok-operator">)</span>
+    test_df<span class="tok-operator">.</span>to_csv<span class="tok-operator">(</span>test_csv<span class="tok-operator">,</span> index<span class="tok-operator">=</span><span class="tok-keyword">False</span><span class="tok-operator">)</span>
+    <span class="tok-builtin">print</span><span class="tok-operator">(</span>test_df<span class="tok-operator">.</span>to_string<span class="tok-operator">(</span>index<span class="tok-operator">=</span><span class="tok-keyword">False</span><span class="tok-operator">,</span> float_format<span class="tok-operator">=</span><span class="tok-keyword">lambda</span> x<span class="tok-operator">:</span> f"<span class="tok-operator">{</span>x<span class="tok-operator">:</span>.4f<span class="tok-operator">}</span>"<span class="tok-operator">)</span><span class="tok-operator">)</span>
+    <span class="tok-builtin">print</span><span class="tok-operator">(</span>f"\nTest summary written to: <span class="tok-operator">{</span>test_csv<span class="tok-operator">}</span>"<span class="tok-operator">)</span>
+
+    <span class="tok-comment"># Predictions for best model</span>
+    <span class="tok-builtin">print</span><span class="tok-operator">(</span><span class="tok-string">"\n=== Generating test predictions for best model ==="</span><span class="tok-operator">)</span>
+    best_model <span class="tok-operator">=</span> load_model<span class="tok-operator">(</span>best_model_path<span class="tok-operator">)</span>
+    pred_csv <span class="tok-operator">=</span> os<span class="tok-operator">.</span>path<span class="tok-operator">.</span>join<span class="tok-operator">(</span>args<span class="tok-operator">.</span>models_dir<span class="tok-operator">,</span> <span class="tok-string">"best_model_test_predictions.csv"</span><span class="tok-operator">)</span>
+    save_predictions<span class="tok-operator">(</span>best_model<span class="tok-operator">,</span> X_te<span class="tok-operator">,</span> ids_te<span class="tok-operator">,</span> pred_csv<span class="tok-operator">)</span>
+    <span class="tok-builtin">print</span><span class="tok-operator">(</span>f"Predictions saved to: <span class="tok-operator">{</span>pred_csv<span class="tok-operator">}</span>"<span class="tok-operator">)</span>
+
+<span class="tok-keyword">if</span> <span class="tok-builtin">__name__</span> <span class="tok-operator">==</span> <span class="tok-string">"__main__"</span><span class="tok-operator">:</span>
+    main<span class="tok-operator">(</span><span class="tok-operator">)</span>
+</code></pre>
+</section></div>
+  </section>
+</main>
+<script>
+(() => {
+  const tabs = Array.from(document.querySelectorAll('.tab'));
+  const panes = Array.from(document.querySelectorAll('.code-pane'));
+  const copyButton = document.querySelector('.copy-button');
+
+  function activate(tab) {
+    const target = tab.dataset.target;
+    tabs.forEach((item) => {
+      const active = item === tab;
+      item.classList.toggle('is-active', active);
+      item.setAttribute('aria-selected', String(active));
+      item.tabIndex = active ? 0 : -1;
+    });
+    panes.forEach((pane) => {
+      const active = pane.id === target;
+      pane.hidden = !active;
+      pane.classList.toggle('is-active', active);
+      if (active) pane.scrollTo({ top: 0, left: 0 });
+    });
+    copyButton.textContent = 'Copy code';
+  }
+
+  tabs.forEach((tab, index) => {
+    tab.addEventListener('click', () => activate(tab));
+    tab.addEventListener('keydown', (event) => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      let next = index;
+      if (event.key === 'ArrowLeft') next = (index - 1 + tabs.length) % tabs.length;
+      if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
+      if (event.key === 'Home') next = 0;
+      if (event.key === 'End') next = tabs.length - 1;
+      tabs[next].focus();
+      activate(tabs[next]);
+    });
+  });
+
+  async function copyActiveCode() {
+    const code = document.querySelector('.code-pane:not([hidden]) code');
+    if (!code) return;
+    const text = code.textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (_) {
+      const area = document.createElement('textarea');
+      area.value = text;
+      area.style.position = 'fixed';
+      area.style.opacity = '0';
+      document.body.appendChild(area);
+      area.select();
+      document.execCommand('copy');
+      area.remove();
+    }
+    copyButton.textContent = 'Copied';
+    window.setTimeout(() => { copyButton.textContent = 'Copy code'; }, 1600);
+  }
+
+  copyButton.addEventListener('click', copyActiveCode);
+  tabs.forEach((tab, index) => { tab.tabIndex = index === 0 ? 0 : -1; });
+})();
+</script>
+</body>
+</html>

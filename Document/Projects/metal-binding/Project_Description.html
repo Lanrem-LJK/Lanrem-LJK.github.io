@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Jingkai LAN's master's thesis on sequence-based metalloprotein classification: dataset curation, computational negative-set construction, protein language models, evaluation, and limitations.">
+<meta name="description" content="Jingkai LAN's master's thesis on sequence-based metalloprotein classification: research background, dataset construction, protein language models, results, and applications to functional annotation.">
 <title>Metal-Binding Protein Classification | Jingkai LAN</title>
 <style>
 :root{--bg:#fbfbfd;--paper:#fff;--ink:#1c1e26;--muted:#626b79;--line:#e7e8ee;--accent:#2f5bd9;--soft:#f2f4f8}
@@ -21,153 +21,92 @@ ul{padding-left:21px;margin:14px 0}li{margin:9px 0}.sources{font-size:14px;color
 </head>
 <body>
 <nav class="page-nav" aria-label="Project navigation">
-<a href="../../../index.html">← Projects</a><a href="#pipeline">Dataset</a><a href="#models">Models</a><a href="#results">Results</a><a href="#limitations">Limitations</a><a href="Code_Sample_Jingkai_LAN.html">Code Sample</a>
+<a href="../../../index.html">← Projects</a><a href="#background">Background</a><a href="#pipeline">Methods</a><a href="#models">Models</a><a href="#results">Results</a><a href="#significance">Significance</a><a href="Code_Sample_Jingkai_LAN.html">Code Sample</a>
 </nav>
-<header class="hero">
-<div class="wrap">
+<header class="hero"><div class="wrap">
 <p class="eyebrow">Master's thesis · University of Bern · 2025</p>
-<h1>Sequence-based classification of metal-binding proteins</h1>
-<p class="subtitle">Dataset curation and protein language model experiments for identifying metalloproteins and predicting their enzyme annotation from amino-acid sequences.</p>
-<div class="meta">
-<p>Jingkai LAN · Interfaculty Bioinformatics Unit</p>
-<p>Supervisor: Prof. Thomas Lemmin · Co-supervisor: Giulia Peteani</p>
-<p>Thesis: <em>Advancing Metal-Binding Protein Predictions with Deep Learning</em></p>
-</div>
+<h1>Metal-binding protein prediction from amino-acid sequences</h1>
+<p class="subtitle">A curated metalloprotein dataset and protein language model workflows for metal-binding and enzyme classification.</p>
+<div class="meta"><p>Jingkai LAN · Interfaculty Bioinformatics Unit</p><p>Supervisor: Prof. Thomas Lemmin · Co-supervisor: Giulia Peteani</p><p>Thesis: <em>Advancing Metal-Binding Protein Predictions with Deep Learning</em></p></div>
 <div class="actions"><a class="btn" href="../../Paper/Jingkai_thesis.pdf">Read thesis</a><a class="btn secondary" href="Code_Sample_Jingkai_LAN.html">View code sample</a></div>
-</div>
-</header>
+</div></header>
 <main>
-<section id="overview">
-<div class="wrap">
-<p class="kicker">Research scope</p>
-<h2>Research questions and approach</h2>
-<p>This project examined two sequence-level classification tasks: identifying proteins represented as metal-binding in structural data, and distinguishing enzyme-annotated metalloproteins from the dataset's “Structural” category. I assembled a chain-level dataset from MESPEUS and MbPA, constructed two sources of negative examples, and compared ProtBERT-based classifiers with different training strategies.</p>
-<p>Structural information was used to curate labels, select residue neighborhoods, and screen redesigned sequences. At prediction time, the classifiers use amino-acid sequences or embeddings derived from those sequences. They produce protein-level class labels; they do not locate binding residues, identify a specific metal ion, or measure catalytic activity.</p>
-</div>
-</section>
-<section class="alt" id="pipeline">
-<div class="wrap">
-<p class="kicker">Dataset construction</p>
-<h2>From structural records to labelled sequences</h2>
-<p class="intro">PDB chain identifiers connect the sequence data to their coordination records and extracted site annotations.</p>
-<figure>
-<a href="figures/Figure_0.png" target="_blank" rel="noopener"><img src="figures/Figure_0.png" alt="Original thesis diagram showing database integration, sequence curation, site extraction, and negative-set construction" loading="lazy"></a>
-<figcaption>Dataset construction and negative-set generation, reproduced from the thesis. The screening criteria and label definitions are described below. Select a figure to view it at full resolution.</figcaption>
-</figure>
-<div class="method">
-<h3>Collect structures and extract coordination records</h3>
-<p>PDB identifiers from MESPEUS and MbPA were merged and deduplicated. Metal, chain, and residue information was parsed from <code>REMARK 620</code>, which records metal-coordination geometry in the legacy PDB format. This supplied a consistent annotation source for the project, although coverage is incomplete: the absence of this record is not evidence that a structure lacks metal binding.</p>
-</div>
-<div class="method">
-<h3>Retrieve sequences and reconcile residue positions</h3>
-<p>Positive sequences were retrieved from <code>SEQRES</code> using Biopython, retaining deposited polymer residues that may be unresolved in the coordinates. Sequences with at least 10% <code>X</code> residues were excluded. Identical sequences were deduplicated, followed by MMseqs2 clustering at a 90% identity setting to reduce redundancy.</p>
-<p>The redesigned sequences required additional mapping between coordinate-based residue numbering and the deposited sequence. The mapping scripts account for numbering gaps, insertion codes, and missing-residue records. This keeps changes at selected structural positions aligned with the corresponding sequence positions.</p>
-</div>
-<div class="method">
-<h3>Extract and filter site neighborhoods</h3>
-<p>ProDy was used to extract atom neighborhoods at two distances: 2.88 Å for close-contact annotation and 5 Å for the wider neighborhood considered during sequence redesign. Site filtering checked coordination records, amino-acid neighborhoods, and chain consistency; multichain sites were excluded. Cofactor-associated sites were retained, including sites where close contacts involve a ligand rather than a protein residue. Sequences longer than 2,048 amino acids were removed from the final positive set.</p>
-<p>The two distances serve different operational purposes. Neither is a universal threshold for metal affinity or evidence of physiological binding.</p>
-</div>
-<div class="example">
-<h3>Worked example: the Mg site in 13PK</h3>
-<p>In <a href="https://www.rcsb.org/structure/13PK" target="_blank" rel="noopener">PDB 13PK</a>, chain D, Mg at residue 422 is 2.38 Å from Asp377 OD2. Lys219 has a nearest atom 4.13 Å away. Asp377 therefore appears in both residue neighborhoods, while Lys219 appears only in the 5 Å neighborhood.</p>
-<div class="table-scroll"><table>
-<caption>Atom-to-atom distances calculated from the deposited coordinates; residue numbers refer to chain D.</caption>
-<thead><tr><th scope="col">Protein atom</th><th scope="col">Distance to Mg422</th><th scope="col">Within 2.88 Å</th><th scope="col">Within 5 Å</th></tr></thead>
-<tbody><tr><td>Asp377 OD2</td><td class="number">2.38 Å</td><td>Yes</td><td>Yes</td></tr><tr><td>Lys219 CE</td><td class="number">4.13 Å</td><td>No</td><td>Yes</td></tr><tr><td>Gly376 N</td><td class="number">4.74 Å</td><td>No</td><td>Yes</td></tr></tbody>
-</table></div>
-<p class="note">ADP and phosphate atoms also occur within the close-contact region of this site. A count of nearby protein residues does not include every ligand atom around the metal.</p>
-</div>
-<div class="method">
-<h3>Assign enzyme annotations</h3>
-<p>Enzyme annotations were merged from BRENDA and PDB records, with BRENDA taking precedence when available. Chain-specific annotations were used when available; otherwise, annotations for the PDB entry were assigned to the chain. Chains without an enzyme annotation in either source were assigned the published category name “Structural.” This is an annotation-derived class, not an experimentally established structural function or proof of absent enzyme activity.</p>
-</div>
-<div class="table-scroll"><table>
-<caption>Final positive-set composition, checked against the retained sequence IDs and site table.</caption>
-<thead><tr><th scope="col">Dataset quantity</th><th scope="col">Count</th></tr></thead>
-<tbody><tr><td>Positive protein sequences</td><td class="number">18,340</td></tr><tr><td>Retained site records</td><td class="number">35,339</td></tr><tr><td>Element categories in site annotations</td><td class="number">44</td></tr><tr><td>Enzyme-annotated / “Structural” sequences</td><td class="number">10,447 / 7,893</td></tr></tbody>
-</table></div>
-</div>
-</section>
-<section id="negatives">
-<div class="wrap">
-<p class="kicker">Negative-set construction</p>
-<h2>Two sources of negative examples</h2>
-<h3>Synthetic negatives</h3>
-<p>ProteinMPNN redesigned residues in the 5 Å neighborhoods while other positions were fixed. Ten candidates were generated per sequence, and the candidate with the largest redesign rate was retained. Temperature 1.0 and negative biases for C, D, E, and H were used to encourage changes at commonly observed coordinating residues.</p>
-<p>Redesigned sequences were screened with ESMFold and TM-align: mean pLDDT ≥60, RMSD &lt;3 Å, and TM-score &gt;0.5 (normalized by predicted-chain length). These checks assess prediction confidence and similarity to the reference structure; they do not establish physical stability.</p>
-<p>CHAI-1 predictions were then assessed using the 2.88 Å contact criterion. A redesigned sequence was retained only when all five CHAI-1 outputs were labelled “not interacting” or “Changed position,” indicating no contact overlap with the reference residue positions used by the check. The final set contains 9,666 synthetic sequences. These are computationally screened negatives: the procedure aims to disrupt reference-site contacts, but does not experimentally confirm loss of all metal binding.</p>
-<figure class="narrow"><a href="figures/Figure_4.png" target="_blank" rel="noopener"><img src="figures/Figure_4.png" alt="Thesis workflow for ProteinMPNN sequence redesign and structural screening of synthetic negatives" loading="lazy"></a><figcaption>Synthetic-sequence generation and filtering. Acceptance depends on the computational contact labels described above.</figcaption></figure>
-<h3>Natural negatives</h3>
-<p>The second set was obtained from other chains in the same PDB complexes that lacked the selected metal-binding annotation. Duplicate sequences and unsuitable sequence records were removed, yielding 9,661 natural negative sequences. This supplies a separate sequence distribution from the redesigned negatives, but annotation absence may introduce false negatives.</p>
-</div>
-</section>
-<section class="alt" id="models">
-<div class="wrap">
-<p class="kicker">Model development</p>
-<h2>Three classification tasks</h2>
-<p>ProtBERT representations (from the ProtBERT-BFD checkpoint) were used with adapter fine-tuning, semi-supervised GANBERT, and conventional classifiers. Sequence clustering was used during dataset partitioning to reduce relatedness across splits. The three tasks use different training populations and task-specific partitions.</p>
-<div class="table-scroll"><table>
-<thead><tr><th scope="col">Model</th><th scope="col">Labels and data</th><th scope="col">Approach</th></tr></thead>
-<tbody>
-<tr><td><strong>MoN</strong><br>Metalloprotein or Not</td><td>Metal-binding versus negative; includes positive, synthetic, and natural sequences.</td><td>ProtBERT adapters trained in five folds; predictions combined by majority vote.</td></tr>
-<tr><td><strong>EoS</strong><br>Enzymatic or Structural</td><td>Enzyme-annotated versus “Structural”; uses metalloprotein sequences.</td><td>GANBERT, embedding-based SVM and XGBoost, followed by an MLP ensemble using their output scores.</td></tr>
-<tr><td><strong>ESNN</strong><br>Enzymatic / Structural / Natural Negative</td><td>Three classes; uses positive sequences and natural negatives.</td><td>Class-weighted XGBoost on mean-pooled ProtBERT embeddings; layers 7, 15, 23, and 30 were compared. The reported model uses layer 15.</td></tr>
-</tbody>
-</table></div>
-<p>For EoS, the experiments compared pretrained and fine-tuned representations, CLS vectors and mean pooling, and several transformer layers. Class weights were calculated from training-label frequencies for SVM and XGBoost; the MLP ensemble used upsampling of the minority class. GANBERT additionally used unlabeled sequences in adversarial training, while its generator produced synthetic embedding vectors from random noise.</p>
-<figure><a href="figures/Figure_10.png" target="_blank" rel="noopener"><img src="figures/Figure_10.png" alt="Thesis diagram of ProtBERT representation extraction and SVM or XGBoost classification for EoS" loading="lazy"></a><figcaption>Representation extraction and classifier experiments for the EoS task. The diagram summarizes alternatives evaluated in the study.</figcaption></figure>
-</div>
-</section>
-<section id="results">
-<div class="wrap">
-<p class="kicker">Evaluation</p>
-<h2>Reported internal test results</h2>
-<p>The table summarizes the saved evaluations. F1 definitions and evaluation populations are specified because the tasks are not directly interchangeable.</p>
-<div class="table-scroll"><table>
-<thead><tr><th scope="col">Evaluation</th><th scope="col">Test sequences</th><th scope="col">Accuracy</th><th scope="col">F1</th><th scope="col">F1 definition</th></tr></thead>
-<tbody>
-<tr><td>MoN · all negative sources</td><td class="number">3,768</td><td class="number">76.59%</td><td class="number">75.90%</td><td>Metal-positive binary F1</td></tr>
-<tr><td>MoN · synthetic negatives excluded</td><td class="number">2,819</td><td class="number">78.61%</td><td class="number">82.17%</td><td>Metal-positive binary F1</td></tr>
-<tr><td>EoS · reported MLP ensemble</td><td class="number">1,835</td><td class="number">74.11%</td><td class="number">72.93%</td><td>Enzyme-positive binary F1</td></tr>
-<tr><td>ESNN · three-class task</td><td class="number">2,801</td><td class="number">68.87%</td><td class="number">69.20%</td><td>Macro F1 across three classes</td></tr>
+<section id="background"><div class="wrap">
+<p class="kicker">Research context</p><h2>Background and research objective</h2>
+<p>Metal ions contribute to enzyme catalysis, protein stability, and cellular regulation. Identifying which proteins bind metals, and how those metals relate to protein function, is therefore part of functional annotation. Experimental characterization and structural analysis provide detailed evidence, but require resources that make it difficult to characterize every newly identified protein.</p>
+<p>Sequence-based prediction offers a way to screen proteins using their amino-acid sequences. This project addressed two related questions: whether a protein is metal-binding, and whether a metalloprotein belongs to an enzymatic or structural category. The aim was to develop classification workflows that could support metalloprotein annotation without requiring a structure as model input.</p>
+<p>We first built a dataset linking protein sequences to metal-coordination and enzyme annotations, then constructed negative examples and trained three models using ProtBERT representations. Structural information supported dataset construction and sequence redesign; the resulting classifiers operate on sequences.</p>
+</div></section>
+<section class="alt" id="pipeline"><div class="wrap">
+<p class="kicker">Methods · Dataset</p><h2>Constructing the metalloprotein dataset</h2>
+<p>The dataset combined MESPEUS and MbPA to bring together their structural entries. PDB and chain identifiers were retained throughout processing, connecting each sequence to its metal sites and annotations.</p>
+<figure><a href="figures/Figure_0.png" target="_blank" rel="noopener"><img src="figures/Figure_0.png" alt="Thesis pipeline for database integration, sequence curation, metal-site extraction, and negative-set construction" loading="lazy"></a><figcaption>Overview of dataset construction and negative-set generation. Select a figure to view it at full resolution.</figcaption></figure>
+<div class="method"><h3>1. Integrate structures and retrieve sequences</h3>
+<p>PDB identifiers from the two databases were merged and deduplicated. Metal, chain, and residue information was extracted from <code>REMARK 620</code> coordination records. Biopython retrieved the deposited polymer sequences from <code>SEQRES</code>, including residues that were unresolved in the structure.</p>
+<p>Sequences with at least 10% unknown <code>X</code> residues were excluded. Identical sequences were removed, and MMseqs2 clustering at a 90% identity setting reduced sequence redundancy.</p></div>
+<div class="method"><h3>2. Annotate and filter metal-site neighborhoods</h3>
+<p>ProDy extracted neighborhoods around each metal ion. A 2.88 Å cutoff defined close atom contacts, while a 5 Å radius defined the wider residue neighborhood used for redesign. Coordination records and neighborhood information were combined to check site completeness and chain consistency. Multichain sites were filtered, cofactor-associated sites were retained, and the final positive sequences were restricted to lengths of up to 2,048 amino acids.</p>
+<p>These annotations describe both protein residues and nearby ligands, allowing direct and cofactor-associated metal environments to be represented in the same dataset.</p></div>
+<div class="example"><h3>Example: two neighborhoods around Mg in 13PK</h3>
+<p>In <a href="https://www.rcsb.org/structure/13PK" target="_blank" rel="noopener">PDB 13PK</a>, chain D, Mg422 lies 2.38 Å from Asp377 OD2. The nearest atom of Lys219 is 4.13 Å away, and Gly376 N is 4.74 Å away. Asp377 therefore enters the close-contact annotation, while all three residues belong to the wider redesign neighborhood.</p>
+<div class="table-scroll"><table><caption>Distances calculated from the deposited atom coordinates in chain D.</caption><thead><tr><th scope="col">Protein atom</th><th scope="col">Distance to Mg422</th><th scope="col">Within 2.88 Å</th><th scope="col">Within 5 Å</th></tr></thead><tbody><tr><td>Asp377 OD2</td><td class="number">2.38 Å</td><td>Yes</td><td>Yes</td></tr><tr><td>Lys219 CE</td><td class="number">4.13 Å</td><td>No</td><td>Yes</td></tr><tr><td>Gly376 N</td><td class="number">4.74 Å</td><td>No</td><td>Yes</td></tr></tbody></table></div>
+<p class="note">The close-contact region also contains ADP and phosphate atoms, illustrating a metal environment involving both protein and ligand atoms.</p></div>
+<div class="method"><h3>3. Assign functional annotations</h3>
+<p>Enzyme annotations were merged from BRENDA and PDB, with BRENDA taking precedence. Chain-specific records were used when available, followed by entry-level annotations. For the classification dataset, sequences with an enzyme annotation were labelled enzymatic; those without an annotation in either source were assigned the category “Structural.”</p></div>
+<div class="table-scroll"><table><caption>Final positive-set composition.</caption><thead><tr><th scope="col">Quantity</th><th scope="col">Count</th></tr></thead><tbody><tr><td>Metal-binding protein sequences</td><td class="number">18,340</td></tr><tr><td>Retained site records</td><td class="number">35,339</td></tr><tr><td>Element categories in site annotations</td><td class="number">44</td></tr><tr><td>Enzymatic / Structural sequences</td><td class="number">10,447 / 7,893</td></tr></tbody></table></div>
+</div></section>
+<section id="negatives"><div class="wrap">
+<p class="kicker">Methods · Negative examples</p><h2>Building two complementary negative sets</h2>
+<p>Training a metal-binding classifier also required sequences labelled as negative. We constructed two sets with different purposes: redesigned sequences close to the positives, and naturally occurring protein chains from the same structural complexes.</p>
+<h3>Synthetic negatives: redesigning the local sequence</h3>
+<p>ProteinMPNN redesigned residues within the 5 Å metal-site neighborhoods while keeping other positions fixed. This produced examples that remain close to their positive counterparts while altering the local sequence around the metal. Ten candidates were generated per sequence, using temperature 1.0 and negative biases for C, D, E, and H; the candidate with the largest redesign rate was retained.</p>
+<p>Coordinate-based residue numbering was mapped back to the deposited sequence, accounting for numbering gaps, insertion codes, and unresolved residues. ESMFold and TM-align then screened candidates for structure-prediction confidence and similarity to the reference fold: mean pLDDT ≥60, RMSD &lt;3 Å, and TM-score &gt;0.5.</p>
+<p>CHAI-1 provided five structure predictions per sequence for contact analysis. Sequences were retained when all five outputs showed either absent contacts or contacts shifted away from the reference positions used by the check. This yielded <strong>9,666 computationally screened synthetic negatives</strong>.</p>
+<figure class="narrow"><a href="figures/Figure_4.png" target="_blank" rel="noopener"><img src="figures/Figure_4.png" alt="ProteinMPNN redesign followed by ESMFold, TM-align, and CHAI-1 screening" loading="lazy"></a><figcaption>Sequence redesign and structural screening for the synthetic negative set.</figcaption></figure>
+<h3>Natural negatives: other chains in the complexes</h3>
+<p>Other protein chains without the selected metal-coordination annotation were extracted from the source PDB complexes. After removing duplicate and unsuitable sequence records, the set contained <strong>9,661 natural negative sequences</strong>. These supplied naturally occurring examples for training and evaluation alongside the redesigned sequences.</p>
+</div></section>
+<section class="alt" id="models"><div class="wrap">
+<p class="kicker">Methods · Prediction models</p><h2>Learning metal binding and functional categories</h2>
+<p>ProtBERT, using the ProtBERT-BFD checkpoint, converted amino-acid sequences into learned representations. We compared adapter fine-tuning, GANBERT semi-supervised training, and embedding-based SVM and XGBoost classifiers across three tasks.</p>
+<div class="table-scroll"><table><thead><tr><th scope="col">Model</th><th scope="col">Prediction task</th><th scope="col">Training approach</th></tr></thead><tbody>
+<tr><td><strong>MoN</strong><br>Metalloprotein or Not</td><td>Metal-binding versus negative, using both negative sources.</td><td>ProtBERT adapter training in five folds, with predictions combined by majority vote.</td></tr>
+<tr><td><strong>EoS</strong><br>Enzymatic or Structural</td><td>Enzymatic versus Structural among metalloproteins.</td><td>GANBERT, embedding-based SVM and XGBoost, followed by an MLP ensemble of their output scores.</td></tr>
+<tr><td><strong>ESNN</strong><br>Enzymatic / Structural / Natural Negative</td><td>Joint classification into three categories, using positives and natural negatives.</td><td>Class-weighted XGBoost on mean-pooled ProtBERT embeddings. Layers 7, 15, 23, and 30 were compared; layer 15 gave the reported result.</td></tr>
+</tbody></table></div>
+<p>For EoS, representation experiments compared pretrained and fine-tuned ProtBERT, CLS vectors and mean pooling, and multiple transformer layers. Class weights in SVM and XGBoost accounted for differences in class size. The ensemble combined GANBERT, SVM, and XGBoost scores in an MLP, with upsampling of the minority class during training.</p>
+<p>GANBERT used additional unlabeled sequences in its adversarial objective: real sequences were encoded by the backbone, while a generator produced artificial embedding vectors from random noise. This provided a semi-supervised alternative to classifiers trained on fixed sequence embeddings.</p>
+<p>Dataset partitioning used sequence clusters to reduce relatedness across splits. Each task had its own training and evaluation data, reflecting the labels and negative sources used by that model.</p>
+<figure><a href="figures/Figure_10.png" target="_blank" rel="noopener"><img src="figures/Figure_10.png" alt="Workflow comparing ProtBERT embeddings and SVM or XGBoost classifiers for enzymatic versus structural classification" loading="lazy"></a><figcaption>Embedding extraction and classifier experiments for the EoS task.</figcaption></figure>
+</div></section>
+<section id="results"><div class="wrap">
+<p class="kicker">Results</p><h2>Model performance</h2>
+<p>The evaluations measured metal-binding classification, functional classification within the metalloprotein set, and joint three-class prediction.</p>
+<div class="table-scroll"><table><thead><tr><th scope="col">Evaluation</th><th scope="col">Test sequences</th><th scope="col">Accuracy</th><th scope="col">F1</th><th scope="col">F1 definition</th></tr></thead><tbody>
+<tr><td>MoN · both negative sources</td><td class="number">3,768</td><td class="number">76.59%</td><td class="number">75.90%</td><td>Metal-positive binary F1</td></tr>
+<tr><td>MoN · positives and natural negatives</td><td class="number">2,819</td><td class="number">78.61%</td><td class="number">82.17%</td><td>Metal-positive binary F1</td></tr>
+<tr><td>EoS · MLP ensemble</td><td class="number">1,835</td><td class="number">74.11%</td><td class="number">72.93%</td><td>Enzyme-positive binary F1</td></tr>
+<tr><td>ESNN · three-class prediction</td><td class="number">2,801</td><td class="number">68.87%</td><td class="number">69.20%</td><td>Macro F1 across three classes</td></tr>
 <tr><td>ESNN · metal / non-metal grouping</td><td class="number">2,801</td><td class="number">86.15%</td><td class="number">90.01%</td><td>Metal-positive binary F1</td></tr>
-</tbody>
-</table></div>
-<p class="note">ESNN's binary result combines the enzymatic and “Structural” classes into the metal-binding class without retraining. It uses the ESNN test partition, which differs from MoN's. The higher score therefore does not isolate the effect of model architecture, training data, or the choice of negative examples.</p>
-<h3>Interpretation</h3>
-<p>The experiments support the use of protein language model representations for these annotation tasks, with remaining difficulty in distinguishing the two metalloprotein classes. In ESNN, recall for the “Structural” class was 56.6%, compared with 70.2% for the enzyme-annotated class and 83.7% for natural negatives. MoN's results also depended on whether synthetic negatives were included in evaluation.</p>
-<p>The reported EoS ensemble has a modestly higher test accuracy than the best reported single XGBoost model (74.1% versus 73.2%). However, its quoted configuration comes from a test-ranked experiment summary. Some model comparisons consulted test performance, so these results are exploratory internal evaluations rather than an independently validated final benchmark.</p>
-<details>
-<summary>Per-metal analysis from the thesis</summary>
-<figure><a href="figures/Figure_14.png" target="_blank" rel="noopener"><img src="figures/Figure_14.png" alt="Original thesis comparison of ESNN and MoN per-metal positive-sequence classification rates" loading="lazy"></a><figcaption>The bars show differences in observed positive-sequence classification rates, in percentage points. The models were evaluated on different sequence subsets and sample counts; this is a descriptive comparison, not a paired estimate of improvement. Rare-ion estimates may depend on very few sequences.</figcaption></figure>
-</details>
-</div>
-</section>
-<section class="alt" id="limitations">
-<div class="wrap">
-<p class="kicker">Scope of the evidence</p>
-<h2>Limitations and further work</h2>
-<ul>
-<li><strong>Label uncertainty.</strong> Coordination annotations are incomplete. The “Structural” category and natural negatives depend on missing annotations, while synthetic negatives depend on predicted structures and contact checks.</li>
-<li><strong>Structural sampling.</strong> The data are drawn from deposited PDB structures, without a systematic experimental-method or resolution filter. A metal present in a structure need not have a physiological role.</li>
-<li><strong>Uneven coverage.</strong> Although 44 element categories occur in the site annotations, Zn, Mg, Ca, Fe, and Na account for approximately 85% of sites. Representation of a category does not establish reliable prediction for rare ions.</li>
-<li><strong>Evaluation design.</strong> Cluster-based partitioning reduces some sequence redundancy but does not by itself establish complete homology isolation. Different task partitions and test-set consultation limit comparative conclusions.</li>
-</ul>
-<p>Further evaluation would benefit from a fixed external test set, model selection restricted to training and validation data, and experimentally supported labels for non-binding and non-enzymatic proteins. Direct measurements of redesigned proteins would also test whether the computational screening criteria correspond to changes in metal affinity.</p>
-</div>
-</section>
-<section id="implementation">
-<div class="wrap">
-<p class="kicker">Code and documentation</p>
-<h2>Implementation</h2>
-<p>The interactive code sample presents two selected scripts from the ESNN workflow: extraction of fixed-size ProtBERT embeddings from predefined sequence splits, followed by class-weighted XGBoost training and evaluation. It includes the input format, execution order, and exported predictions and metrics.</p>
+</tbody></table></div>
+<p class="note">For ESNN's binary evaluation, the enzymatic and Structural predictions were grouped into the metal-binding class. The table reports each model's task-specific test population and F1 definition.</p>
+<p>ESNN achieved 68.87% accuracy for the joint three-class task. Grouping its two metalloprotein classes gave 86.15% accuracy and 90.01% F1 for metal-binding classification. The EoS ensemble combined GANBERT, SVM, and XGBoost scores and reached 74.11% accuracy, compared with 73.2% for the best reported single XGBoost model.</p>
+<p>The experiments also highlighted how the negative examples affect evaluation. MoN reached 76.59% accuracy with both negative sources and 78.61% on the subset containing positives and natural negatives. The two sets therefore provide distinct ways to examine performance on redesigned and naturally occurring sequences.</p>
+<details><summary>Per-metal results</summary><figure><a href="figures/Figure_14.png" target="_blank" rel="noopener"><img src="figures/Figure_14.png" alt="Thesis analysis of per-metal positive-sequence classification rates for ESNN and MoN" loading="lazy"></a><figcaption>Differences in positive-sequence classification rates between the MoN and ESNN test subsets, expressed in percentage points. The original figure includes the ESNN sample counts; the two models use different test populations.</figcaption></figure></details>
+<details><summary>Evaluation details</summary><p class="note">The metrics summarize the experiments reported in the thesis and saved evaluation outputs. The EoS ensemble value is the highest test-ranked configuration in its experiment summary. Test performance was consulted during some model comparisons; the scores are presented here as results of this study's internal evaluations.</p></details>
+</div></section>
+<section class="alt" id="significance"><div class="wrap">
+<p class="kicker">Project significance</p><h2>A sequence-based workflow for metalloprotein annotation</h2>
+<p>The project brings structural evidence, sequence data, and enzyme annotations into a common dataset. Its curation workflow records metal-site neighborhoods and connects them to protein sequences, supporting both metal-binding prediction and functional classification.</p>
+<p>The experiments show that protein language model representations contain information useful for these tasks. Adapter training, embedding-based classifiers, and score ensembling provide several ways to use that information, while the three-class model connects metal-binding and functional categories in one prediction workflow.</p>
+<p>Because the classifiers operate on amino-acid sequences, they can support screening and prioritization when detailed structural information is unavailable. The dataset, synthetic-sequence workflow, and model code also provide a basis for further studies of how local sequence changes relate to metal binding.</p>
+</div></section>
+<section id="implementation"><div class="wrap">
+<p class="kicker">Code and documentation</p><h2>Read the implementation</h2>
+<p>The interactive code sample presents two scripts from the ESNN workflow: extracting fixed-size ProtBERT embeddings from predefined sequence splits, then training and evaluating class-weighted XGBoost models. It explains the input format, execution order, and exported predictions and metrics alongside the Python source.</p>
 <div class="actions"><a class="btn" href="Code_Sample_Jingkai_LAN.html">Open Code Sample</a><a class="btn secondary" href="https://github.com/ibmm-unibe-ch/metal_binding_predictions" target="_blank" rel="noopener">Project repository</a></div>
-<p class="sources technical">Methods and results are documented in the <a href="../../Paper/Jingkai_thesis.pdf">thesis</a>. This description also uses the dataset and evaluation scripts, retained result tables, and research records (<code>Note.md</code>, <code>Record.md</code>, and <code>Dairy.md</code>) to distinguish exploratory work from the final datasets.</p>
-<p class="sources">The worked example can be checked in the <a href="https://files.rcsb.org/download/13pk.pdb" target="_blank" rel="noopener">13PK coordinate file</a>. The meaning of the coordination record is described in the <a href="https://www.wwpdb.org/documentation/file-format-content/format33/remarks2.html#REMARK%20620" target="_blank" rel="noopener">wwPDB format documentation</a>.</p>
-</div>
-</section>
+<p class="sources technical">The <a href="../../Paper/Jingkai_thesis.pdf">thesis</a> contains the full methods and results. Dataset scripts, model experiments, and research notes are available in the project repository. The worked example uses the <a href="https://files.rcsb.org/download/13pk.pdb" target="_blank" rel="noopener">13PK coordinate file</a>.</p>
+</div></section>
 </main>
 <footer><div class="wrap"><p>Jingkai LAN · Master's thesis project · University of Bern</p><p><a href="../../../index.html">Return to projects</a></p></div></footer>
-</body>
-</html>
+</body></html>

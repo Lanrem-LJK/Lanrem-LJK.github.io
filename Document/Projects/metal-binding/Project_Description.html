@@ -1,554 +1,173 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Metal-Binding Protein Prediction · Project Description | Jingkai LAN</title>
-<meta name="description" content="Master’s thesis project: metalloprotein dataset curation, negative-set generation, ProtBERT models, evaluation, and an interactive machine learning code sample.">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Jingkai LAN's master's thesis on sequence-based metalloprotein classification: dataset curation, computational negative-set construction, protein language models, evaluation, and limitations.">
+<title>Metal-Binding Protein Classification | Jingkai LAN</title>
 <style>
-  :root {
-    --bg: #fbfbfd;
-    --surface: #ffffff;
-    --ink: #1c1e26;
-    --muted: #6b7280;
-    --line: #e7e8ee;
-    --accent: #2f5bd9;
-    --accent-soft: #eef2fd;
-    --code: #f4f5f8;
-    --radius: 14px;
-  }
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-    color: var(--ink);
-    background: var(--bg);
-    line-height: 1.65;
-    -webkit-font-smoothing: antialiased;
-  }
-  a { color: var(--accent); text-decoration: none; }
-  a:hover { text-decoration: underline; }
-
-  .wrap { max-width: 960px; margin: 0 auto; padding: 0 24px; }
-
-  /* Hero */
-  header.hero {
-    background: var(--surface);
-    border-bottom: 1px solid var(--line);
-    padding: 72px 0 56px;
-    text-align: center;
-  }
-  .eyebrow {
-    display: inline-block;
-    font-size: 13px;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: var(--accent);
-    font-weight: 600;
-    margin-bottom: 18px;
-  }
-  header.hero h1 {
-    font-size: 40px;
-    line-height: 1.15;
-    margin: 0 0 16px;
-    letter-spacing: -.02em;
-    font-weight: 700;
-  }
-  header.hero .subtitle {
-    font-size: 19px;
-    color: var(--muted);
-    max-width: 640px;
-    margin: 0 auto 24px;
-  }
-  .meta { font-size: 14px; color: var(--muted); }
-  .meta .sep { margin: 0 8px; opacity: .5; }
-
-  /* Sections */
-  section { padding: 56px 0; }
-  section.alt { background: var(--surface); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-  h2 { font-size: 26px; letter-spacing: -.01em; margin: 0 0 8px; }
-  h3 { font-size: 18px; margin: 0 0 8px; }
-  .lead { color: var(--muted); font-size: 16px; margin: 0 0 28px; }
-  .section-head { margin-bottom: 28px; }
-  .kicker {
-    font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
-    color: var(--accent); font-weight: 700; margin-bottom: 6px;
-  }
-  p { margin: 0 0 14px; }
-  .muted { color: var(--muted); }
-
-  /* Stat cards */
-  .stats {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 14px; margin: 28px 0;
-  }
-  .stat {
-    background: var(--surface); border: 1px solid var(--line);
-    border-radius: var(--radius); padding: 20px 18px; text-align: center;
-  }
-  .stat .num { font-size: 30px; font-weight: 700; letter-spacing: -.02em; color: var(--accent); display: block; }
-  .stat .lbl { font-size: 13px; color: var(--muted); margin-top: 4px; }
-
-  /* Problem -> Solution tag */
-  .tag {
-    display: inline-block;
-    font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
-    padding: 1px 7px; border-radius: 5px; margin-right: 7px; vertical-align: 1px;
-  }
-  .tag.problem { background: #fef2f2; color: #b91c1c; }
-  .tag.solution { background: #ecfdf5; color: #047857; }
-  .causal { font-size: 14px; margin: 0 0 6px; line-height: 1.55; }
-  .causal:last-child { margin-bottom: 0; }
-  .causal b { font-weight: 600; }
-
-  /* Pipeline steps */
-  .flow { counter-reset: step; }
-  .step {
-    position: relative;
-    padding: 18px 18px 16px 64px;
-    background: var(--surface); border: 1px solid var(--line);
-    border-radius: var(--radius); margin-bottom: 12px;
-  }
-  .step::before {
-    counter-increment: step; content: counter(step);
-    position: absolute; left: 18px; top: 18px;
-    width: 30px; height: 30px; border-radius: 50%;
-    background: var(--accent-soft); color: var(--accent);
-    font-weight: 700; font-size: 14px;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .step h3 { margin-bottom: 6px; }
-
-  /* Model cards */
-  .models { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 24px; }
-  .model {
-    background: var(--surface); border: 1px solid var(--line);
-    border-radius: var(--radius); padding: 24px;
-  }
-  .model .mtag {
-    display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .08em;
-    text-transform: uppercase; color: var(--accent); background: var(--accent-soft);
-    border-radius: 999px; padding: 3px 10px; margin-bottom: 12px;
-  }
-  .model h3 { font-size: 20px; }
-  .model .task { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
-  .metric { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
-  .metric .row { display: flex; justify-content: space-between; font-size: 13.5px; padding: 3px 0; }
-  .metric .row b { font-weight: 600; }
-
-  /* Thesis figures */
-  .figure { margin: 28px 0; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
-  .figure a { display: block; }
-  .figure img { display: block; width: 100%; height: auto; }
-  .figure.narrow img { max-width: 480px; margin: 0 auto; }
-  .figcaption { font-size: 13px; color: var(--muted); text-align: center; margin: 12px 0 0; }
-  .page-nav, .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
-  .page-nav { padding: 16px 24px; border-bottom: 1px solid var(--line); background: var(--surface); font-size: 14px; }
-  .actions { margin-top: 24px; }
-  .btn { display: inline-block; padding: 9px 18px; border-radius: 6px; background: var(--accent); color: white; font-weight: 600; font-size: 14px; }
-  .btn:hover { background: #2349b6; text-decoration: none; }
-  .details { margin: 12px 0 0; padding-top: 12px; border-top: 1px solid var(--line); font-size: 14px; color: var(--muted); }
-  .table-scroll { overflow-x: auto; }
-  @media (max-width: 680px) {
-    header.hero { padding: 44px 0 36px; }
-    header.hero h1 { font-size: 30px; }
-    section { padding: 36px 0; }
-    .figure { padding: 8px; }
-    .step { padding-left: 58px; }
-  }
-
-  /* Key results table */
-  table.results { width: 100%; border-collapse: collapse; font-size: 14.5px; margin-top: 8px; }
-  table.results th, table.results td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--line); }
-  table.results thead th {
-    background: var(--code); font-weight: 600; color: var(--muted);
-    font-size: 12.5px; text-transform: uppercase; letter-spacing: .06em;
-  }
-  table.results td b { font-weight: 600; }
-  .note { font-size: 12.5px; color: var(--muted); margin-top: 8px; }
-
-  /* Two-column */
-  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  @media (max-width: 680px) { .cols { grid-template-columns: 1fr; } }
-  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; }
-  .panel h3 { margin-top: 0; }
-  .panel ul { margin: 10px 0 0; padding-left: 18px; }
-  .panel li { margin-bottom: 8px; font-size: 14.5px; color: var(--muted); }
-  .panel li b { color: var(--ink); }
-
-  /* Tools */
-  .tools { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
-  .tool {
-    background: var(--surface); border: 1px solid var(--line);
-    border-radius: 999px; padding: 7px 14px; font-size: 13.5px; color: var(--ink);
-  }
-  .tool b { color: var(--accent); font-weight: 600; }
-
-  footer {
-    border-top: 1px solid var(--line); padding: 40px 0 56px;
-    text-align: center; color: var(--muted); font-size: 13.5px;
-  }
-  code { background: var(--code); padding: 2px 6px; border-radius: 5px; font-size: .9em; }
+:root{--bg:#fbfbfd;--paper:#fff;--ink:#1c1e26;--muted:#626b79;--line:#e7e8ee;--accent:#2f5bd9;--soft:#f2f4f8}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}a:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+.wrap{max-width:1000px;margin:auto;padding:0 28px}.page-nav{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 24px;padding:17px 24px;border-bottom:1px solid var(--line);background:var(--paper);font-size:14px}
+.hero{padding:58px 0 42px;background:var(--paper);border-bottom:1px solid var(--line)}.eyebrow{font-size:13px;letter-spacing:.06em;color:var(--muted);margin:0 0 14px}.hero h1{font-size:36px;line-height:1.22;letter-spacing:-.025em;max-width:850px;margin:0 0 20px}.subtitle{max-width:800px;font-size:19px;line-height:1.65;color:var(--muted);margin:0 0 22px}.meta{font-size:14px;color:var(--muted)}.meta p{margin:4px 0}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}.btn{display:inline-block;padding:7px 15px;background:var(--accent);color:#fff;border-radius:5px;font-size:14px;font-weight:600}.btn:hover{background:#2349b6;text-decoration:none}.btn.secondary{color:var(--accent);background:var(--soft)}
+section{padding:42px 0}section.alt{background:var(--paper);border-block:1px solid var(--line)}h2{font-size:26px;line-height:1.3;letter-spacing:-.015em;margin:0 0 22px}h3{font-size:18px;line-height:1.5;margin:26px 0 9px}p{margin:0 0 15px}.kicker{margin:0 0 7px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.intro{color:var(--muted)}.method{margin:26px 0}.method h3{margin-top:0}.method:last-child{margin-bottom:0}
+.table-scroll{overflow-x:auto;margin:22px 0}table{width:100%;border-collapse:collapse;font-size:14px;line-height:1.6}caption{text-align:left;color:var(--muted);font-size:13px;padding-bottom:10px}th,td{padding:12px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}th{background:var(--soft);font-weight:600}.number{white-space:nowrap;font-variant-numeric:tabular-nums}.note{font-size:13px;line-height:1.7;color:var(--muted)}.definition{margin:20px 0;padding-left:18px;border-left:2px solid var(--line)}.definition p:last-child{margin-bottom:0}code{font: .9em ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--soft);border-radius:4px;padding:2px 5px}
+figure{margin:28px 0}figure img{display:block;width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:8px}figure.narrow img{width:min(100%,430px);margin:auto}figcaption{margin-top:10px;color:var(--muted);font-size:13px;line-height:1.65}.example{margin:26px 0}.example h3{margin-top:0}.example table{max-width:790px}.example td:first-child{white-space:nowrap}
+ul{padding-left:21px;margin:14px 0}li{margin:9px 0}.sources{font-size:14px;color:var(--muted)}details{margin:24px 0}summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--accent)}details[open] summary{margin-bottom:15px}.technical{margin-top:14px}footer{padding:28px 0 38px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}footer p{margin:5px 0}
+@media(max-width:680px){.wrap{padding:0 20px}.hero{padding:36px 0 30px}.hero h1{font-size:29px}.subtitle{font-size:17px}section{padding:32px 0}h2{font-size:23px}th,td{padding:10px 11px}.page-nav{gap:8px 16px;padding-inline:16px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 </head>
 <body>
 <nav class="page-nav" aria-label="Project navigation">
-  <a href="../../../index.html">← Projects</a>
-  <a href="#pipeline">Data pipeline</a>
-  <a href="#models">Models</a>
-  <a href="#results">Results</a>
-  <a href="Code_Sample_Jingkai_LAN.html">Code Sample</a>
+<a href="../../../index.html">← Projects</a><a href="#pipeline">Dataset</a><a href="#models">Models</a><a href="#results">Results</a><a href="#limitations">Limitations</a><a href="Code_Sample_Jingkai_LAN.html">Code Sample</a>
 </nav>
-
-<!-- ============ Hero ============ -->
 <header class="hero">
-  <div class="wrap">
-    <span class="eyebrow">Master's Thesis · Sequence-only Prediction</span>
-    <h1>Advancing Metal-Binding Protein Prediction<br>with Deep Learning</h1>
-    <p class="subtitle">
-      A sequence-only framework that predicts, from amino-acid sequence alone,
-      whether a protein binds a metal ion — and whether that metalloprotein is
-      enzymatic or structural.
-    </p>
-    <div class="meta">
-      LAN Jingkai
-      <span class="sep">·</span>
-      University of Bern, Interfaculty Bioinformatics Unit
-      <span class="sep">·</span>
-      Supervisor: Prof. Thomas Lemmin &nbsp;·&nbsp; Co-supervisor: Giulia Peteani
-    </div>
-  </div>
+<div class="wrap">
+<p class="eyebrow">Master's thesis · University of Bern · 2025</p>
+<h1>Sequence-based classification of metal-binding proteins</h1>
+<p class="subtitle">Dataset curation and protein language model experiments for identifying metalloproteins and predicting their enzyme annotation from amino-acid sequences.</p>
+<div class="meta">
+<p>Jingkai LAN · Interfaculty Bioinformatics Unit</p>
+<p>Supervisor: Prof. Thomas Lemmin · Co-supervisor: Giulia Peteani</p>
+<p>Thesis: <em>Advancing Metal-Binding Protein Predictions with Deep Learning</em></p>
+</div>
+<div class="actions"><a class="btn" href="../../Paper/Jingkai_thesis.pdf">Read thesis</a><a class="btn secondary" href="Code_Sample_Jingkai_LAN.html">View code sample</a></div>
+</div>
 </header>
-
-<!-- ============ Overview ============ -->
-<section>
-  <div class="wrap">
-    <div class="section-head">
-      <div class="kicker">Overview</div>
-      <h2>What this project did</h2>
-      <p class="lead">A chain of decisions: each step exists because the step before it hit a real problem.</p>
-    </div>
-    <p>
-      Metalloproteins drive catalysis, structure and regulation across biology, yet they remain heavily
-      <b>under-annotated</b> in public databases because experimental validation is slow and costly.
-      <b>So</b> we set out to build a predictor that works from sequence alone.
-    </p>
-    <p>
-      <b>But</b> good models need clean, representative data — and no existing metalloprotein dataset was large,
-      broad, or clean enough. <b>So</b> we built our own: integrating two public databases (<b>MESPEUS</b> and
-      <b>MbPA</b>) into a rigorously curated positive set of <b>18,340 sequences spanning 44 metal types</b>.
-    </p>
-    <p>
-      <b>Then</b> came the harder question — what should a "negative" even look like? We designed two principled
-      answer-sets (synthetic and natural), and <b>finally</b> trained three sequence-only models on a
-      <b>ProtBERT</b> backbone. The result is a framework that predicts metal binding and enzymatic activity
-      without any hand-crafted features.
-    </p>
-  </div>
+<main>
+<section id="overview">
+<div class="wrap">
+<p class="kicker">Research scope</p>
+<h2>Research questions and approach</h2>
+<p>This project examined two sequence-level classification tasks: identifying proteins represented as metal-binding in structural data, and distinguishing enzyme-annotated metalloproteins from the dataset's “Structural” category. I assembled a chain-level dataset from MESPEUS and MbPA, constructed two sources of negative examples, and compared ProtBERT-based classifiers with different training strategies.</p>
+<p>Structural information was used to curate labels, select residue neighborhoods, and screen redesigned sequences. At prediction time, the classifiers use amino-acid sequences or embeddings derived from those sequences. They produce protein-level class labels; they do not locate binding residues, identify a specific metal ion, or measure catalytic activity.</p>
+</div>
 </section>
-
-<!-- ============ Motivation ============ -->
-<section class="alt">
-  <div class="wrap">
-    <div class="section-head">
-      <div class="kicker">Motivation</div>
-      <h2>Why it matters</h2>
-    </div>
-    <div class="stats">
-      <div class="stat"><span class="num">~1/3</span><span class="lbl">of all proteins bind metal ions</span></div>
-      <div class="stat"><span class="num">~½</span><span class="lbl">of enzymes are metalloenzymes</span></div>
-      <div class="stat"><span class="num">44</span><span class="lbl">metal types covered (prior work: 6–9)</span></div>
-      <div class="stat"><span class="num">0</span><span class="lbl">hand-crafted features — sequence in, label out</span></div>
-    </div>
-    <p class="muted">
-      Sequence-only prediction makes large-scale functional annotation of protein databases feasible,
-      complementing structural methods that are slower and less scalable.
-    </p>
-  </div>
+<section class="alt" id="pipeline">
+<div class="wrap">
+<p class="kicker">Dataset construction</p>
+<h2>From structural records to labelled sequences</h2>
+<p class="intro">PDB chain identifiers connect the sequence data to their coordination records and extracted site annotations.</p>
+<figure>
+<a href="figures/Figure_0.png" target="_blank" rel="noopener"><img src="figures/Figure_0.png" alt="Original thesis diagram showing database integration, sequence curation, site extraction, and negative-set construction" loading="lazy"></a>
+<figcaption>Dataset construction and negative-set generation, reproduced from the thesis. The screening criteria and label definitions are described below. Select a figure to view it at full resolution.</figcaption>
+</figure>
+<div class="method">
+<h3>Collect structures and extract coordination records</h3>
+<p>PDB identifiers from MESPEUS and MbPA were merged and deduplicated. Metal, chain, and residue information was parsed from <code>REMARK 620</code>, which records metal-coordination geometry in the legacy PDB format. This supplied a consistent annotation source for the project, although coverage is incomplete: the absence of this record is not evidence that a structure lacks metal binding.</p>
+</div>
+<div class="method">
+<h3>Retrieve sequences and reconcile residue positions</h3>
+<p>Positive sequences were retrieved from <code>SEQRES</code> using Biopython, retaining deposited polymer residues that may be unresolved in the coordinates. Sequences with at least 10% <code>X</code> residues were excluded. Identical sequences were deduplicated, followed by MMseqs2 clustering at a 90% identity setting to reduce redundancy.</p>
+<p>The redesigned sequences required additional mapping between coordinate-based residue numbering and the deposited sequence. The mapping scripts account for numbering gaps, insertion codes, and missing-residue records. This keeps changes at selected structural positions aligned with the corresponding sequence positions.</p>
+</div>
+<div class="method">
+<h3>Extract and filter site neighborhoods</h3>
+<p>ProDy was used to extract atom neighborhoods at two distances: 2.88 Å for close-contact annotation and 5 Å for the wider neighborhood considered during sequence redesign. Site filtering checked coordination records, amino-acid neighborhoods, and chain consistency; multichain sites were excluded. Cofactor-associated sites were retained, including sites where close contacts involve a ligand rather than a protein residue. Sequences longer than 2,048 amino acids were removed from the final positive set.</p>
+<p>The two distances serve different operational purposes. Neither is a universal threshold for metal affinity or evidence of physiological binding.</p>
+</div>
+<div class="example">
+<h3>Worked example: the Mg site in 13PK</h3>
+<p>In <a href="https://www.rcsb.org/structure/13PK" target="_blank" rel="noopener">PDB 13PK</a>, chain D, Mg at residue 422 is 2.38 Å from Asp377 OD2. Lys219 has a nearest atom 4.13 Å away. Asp377 therefore appears in both residue neighborhoods, while Lys219 appears only in the 5 Å neighborhood.</p>
+<div class="table-scroll"><table>
+<caption>Atom-to-atom distances calculated from the deposited coordinates; residue numbers refer to chain D.</caption>
+<thead><tr><th scope="col">Protein atom</th><th scope="col">Distance to Mg422</th><th scope="col">Within 2.88 Å</th><th scope="col">Within 5 Å</th></tr></thead>
+<tbody><tr><td>Asp377 OD2</td><td class="number">2.38 Å</td><td>Yes</td><td>Yes</td></tr><tr><td>Lys219 CE</td><td class="number">4.13 Å</td><td>No</td><td>Yes</td></tr><tr><td>Gly376 N</td><td class="number">4.74 Å</td><td>No</td><td>Yes</td></tr></tbody>
+</table></div>
+<p class="note">ADP and phosphate atoms also occur within the close-contact region of this site. A count of nearby protein residues does not include every ligand atom around the metal.</p>
+</div>
+<div class="method">
+<h3>Assign enzyme annotations</h3>
+<p>Enzyme annotations were merged from BRENDA and PDB records, with BRENDA taking precedence when available. Chain-specific annotations were used when available; otherwise, annotations for the PDB entry were assigned to the chain. Chains without an enzyme annotation in either source were assigned the published category name “Structural.” This is an annotation-derived class, not an experimentally established structural function or proof of absent enzyme activity.</p>
+</div>
+<div class="table-scroll"><table>
+<caption>Final positive-set composition, checked against the retained sequence IDs and site table.</caption>
+<thead><tr><th scope="col">Dataset quantity</th><th scope="col">Count</th></tr></thead>
+<tbody><tr><td>Positive protein sequences</td><td class="number">18,340</td></tr><tr><td>Retained site records</td><td class="number">35,339</td></tr><tr><td>Element categories in site annotations</td><td class="number">44</td></tr><tr><td>Enzyme-annotated / “Structural” sequences</td><td class="number">10,447 / 7,893</td></tr></tbody>
+</table></div>
+</div>
 </section>
-
-<!-- ============ Pipeline ============ -->
-<section id="pipeline">
-  <div class="wrap">
-    <div class="section-head">
-      <div class="kicker">Part 1 · Dataset construction</div>
-      <h2>The data pipeline — each step fixes a real problem</h2>
-      <p class="lead">Read top-to-bottom as a causal chain: a problem appears, and the next step resolves it.</p>
-    </div>
-
-    <figure class="figure">
-      <a href="figures/Figure_0.png" target="_blank" rel="noopener" aria-label="Open full-size figure: Dataset construction from MESPEUS and MbPA, sequence and binding-site quality control, and synthetic and natural negative-set generation">
-        <img src="figures/Figure_0.png" alt="Dataset construction from MESPEUS and MbPA, sequence and binding-site quality control, and synthetic and natural negative-set generation" loading="lazy">
-      </a>
-      <figcaption class="figcaption">Metalloprotein dataset construction and negative-set generation pipeline. Click the image to view the full-size figure.</figcaption>
-    </figure>
-
-    <div class="flow">
-      <div class="step">
-        <h3>Collect &amp; merge PDB IDs</h3>
-        <p class="causal"><span class="tag problem">Problem</span> No single metalloprotein database is complete — <b>MESPEUS</b> and <b>MbPA</b> each cover different entries and neither is exhaustive.</p>
-        <p class="causal"><span class="tag solution">Solution</span> Merge and deduplicate their PDB IDs, then download the corresponding structures. The merged list contains 81,256 IDs; 81,241 PDB files were retrieved. Keep PDB and chain identifiers throughout so that sequences can be traced back to their structural evidence.</p>
-      </div>
-
-      <div class="step">
-        <h3>Parse REMARK 620 for metal information</h3>
-        <p class="causal"><span class="tag problem">Problem</span> MESPEUS/MbPA label metals from the <b>HETATM</b> region, so non-coordinating ligand ions (e.g. chlorophyll's Mg in <b>1c51</b>) get wrongly tagged as "metal-binding".</p>
-        <p class="causal"><span class="tag solution">Solution</span> Re-derive chains, metal types, sites and residues from the PDB <b>REMARK 620</b> coordination records — the coordination evidence used for this dataset. Non-protein chains are removed during sequence quality control.</p>
-      </div>
-
-      <div class="step">
-        <h3>Retrieve sequences</h3>
-        <p class="causal"><span class="tag problem">Problem</span> ProDy's ATOM-based retrieval returned wrong or truncated sequences — DNA/RNA have no Cα atoms, and stray HETATM/metal atoms introduced spurious <code>X</code> residues.</p>
-        <p class="causal"><span class="tag solution">Solution</span> Switch to Biopython's <b>SEQRES</b> parsing, to recover the deposited polymer sequence, including residues missing from the resolved structure.</p>
-      </div>
-
-      <div class="step">
-        <h3>Quality control</h3>
-        <p class="causal"><span class="tag problem">Problem</span> Sequences still carry unknown <code>X</code> residues, and some metal-atom names are non-standard (<code>MOM→Mo</code>, <code>O1P→Pt</code>, <code>VG→V</code>, <code>WA/WB→W</code>).</p>
-        <p class="causal"><span class="tag solution">Solution</span> Keep structurally meaningful <code>X</code> positions but drop sequences with &gt;10% <code>X</code>, and normalize metal names.</p>
-      </div>
-
-      <div class="step">
-        <h3>Redundancy reduction</h3>
-        <p class="causal"><span class="tag problem">Problem</span> <b>163,509</b> sequences are full of near-duplicates; in nature metal-binding regions are conserved, so near-identical sequences would leak between train and test and inflate performance.</p>
-        <p class="causal"><span class="tag solution">Solution</span> Deduplicate (→40,182), then cluster with <b>MMseqs2</b> at 90% identity, keeping one representative per cluster (40,182 → 21,362). This 90% step reduces dataset redundancy; a separate 30% clustering step is used later to define model splits.</p>
-      </div>
-
-      <div class="step">
-        <h3>Extract &amp; filter binding sites</h3>
-        <p class="causal"><span class="tag problem">Problem</span> Some sites have <b>no amino acid within 2.88 Å</b> (multi-chain or external), and sequences longer than 2048 aa cannot be fed to the model whole.</p>
-        <p class="causal"><span class="tag solution">Solution</span> Use <b>ProDy</b> to extract 2.88 Å / 5 Å spheres, discard sites without usable within-chain coordination, and exclude sequences longer than 2048 aa. The 2.88 Å sphere identifies close coordination contacts; the 5 Å sphere defines the wider neighborhood used for redesign. Filtering leaves 35,339 sites across 18,340 protein sequences.</p>
-      </div>
-
-      <div class="step">
-        <h3>Annotate enzymes</h3>
-        <p class="causal"><span class="tag problem">Problem</span> To train the enzymatic-vs-structural task we need a label, but <b>BRENDA</b> and the PDB enzyme database can disagree.</p>
-        <p class="causal"><span class="tag solution">Solution</span> Prefer BRENDA when available, fall back to PDB, otherwise label the sequence <b>Structural</b> for this dataset. This is an annotation-based category: a missing enzyme record does not experimentally establish a purely structural function.</p>
-      </div>
-    </div>
-
-    <div class="stats">
-      <div class="stat"><span class="num">18,340</span><span class="lbl">final positive sequences</span></div>
-      <div class="stat"><span class="num">35,339</span><span class="lbl">valid metal-binding sites</span></div>
-      <div class="stat"><span class="num">44</span><span class="lbl">distinct metal types</span></div>
-      <div class="stat"><span class="num">10,447 / 7,893</span><span class="lbl">enzymatic / structural</span></div>
-    </div>
-
-
-  </div>
+<section id="negatives">
+<div class="wrap">
+<p class="kicker">Negative-set construction</p>
+<h2>Two sources of negative examples</h2>
+<h3>Synthetic negatives</h3>
+<p>ProteinMPNN redesigned residues in the 5 Å neighborhoods while other positions were fixed. Ten candidates were generated per sequence, and the candidate with the largest redesign rate was retained. Temperature 1.0 and negative biases for C, D, E, and H were used to encourage changes at commonly observed coordinating residues.</p>
+<p>Redesigned sequences were screened with ESMFold and TM-align: mean pLDDT ≥60, RMSD &lt;3 Å, and TM-score &gt;0.5 (normalized by predicted-chain length). These checks assess prediction confidence and similarity to the reference structure; they do not establish physical stability.</p>
+<p>CHAI-1 predictions were then assessed using the 2.88 Å contact criterion. A redesigned sequence was retained only when all five CHAI-1 outputs were labelled “not interacting” or “Changed position,” indicating no contact overlap with the reference residue positions used by the check. The final set contains 9,666 synthetic sequences. These are computationally screened negatives: the procedure aims to disrupt reference-site contacts, but does not experimentally confirm loss of all metal binding.</p>
+<figure class="narrow"><a href="figures/Figure_4.png" target="_blank" rel="noopener"><img src="figures/Figure_4.png" alt="Thesis workflow for ProteinMPNN sequence redesign and structural screening of synthetic negatives" loading="lazy"></a><figcaption>Synthetic-sequence generation and filtering. Acceptance depends on the computational contact labels described above.</figcaption></figure>
+<h3>Natural negatives</h3>
+<p>The second set was obtained from other chains in the same PDB complexes that lacked the selected metal-binding annotation. Duplicate sequences and unsuitable sequence records were removed, yielding 9,661 natural negative sequences. This supplies a separate sequence distribution from the redesigned negatives, but annotation absence may introduce false negatives.</p>
+</div>
 </section>
-
-<!-- ============ Negative sets ============ -->
-<section class="alt">
-  <div class="wrap">
-    <div class="section-head">
-      <div class="kicker">Part 2 · Negative sets</div>
-      <h2>Designing the negatives — the hardest question</h2>
-      <p class="lead">With a positive set in hand, we had to define what "not metal-binding" actually means.</p>
-    </div>
-
-    <div class="cols">
-      <div class="panel">
-        <h3>Synthetic negative set</h3>
-        <p class="causal"><span class="tag problem">Problem</span> We wanted negatives that differ from positives <b>only at the binding site</b> — forcing the model to learn metal binding itself, not other sequence features. But a naive redesign either fails to mutate the key residues, or distorts the whole fold.</p>
-        <p class="causal"><span class="tag solution">Solution</span> Redesign residues within 5 Å of the metal with <b>ProteinMPNN</b> while retaining the surrounding sequence, generate ten candidates per positive sequence at temperature 1.0, with biases −2/−1/−1/−1 for C/D/E/H, keep the candidate with the highest redesign rate, then filter in three stages:</p>
-        <ul>
-          <li><b>ESMFold</b> — keep structures with mean pLDDT ≥ 60.</li>
-          <li><b>TMalign</b> — keep those still fold-similar (RMSD &lt; 3.0, TM-score &gt; 0.5).</li>
-          <li><b>CHAI-1</b> — keep only sequences whose metal ions no longer bind (distance &gt; 2.88 Å). A sequence is retained only when all of its metal-binding sites pass this check.</li>
-        </ul>
-        <p style="margin:12px 0 0" class="muted">Result: <b style="color:var(--ink)">9,666</b> synthetic negatives.</p>
-      </div>
-
-      <div class="panel">
-        <h3>Natural negative set</h3>
-        <p class="causal"><span class="tag problem">Problem</span> The synthetic set was too small to balance the positives, and its sequences were artificially close to positives — we also needed a realistic benchmark.</p>
-        <p class="causal"><span class="tag solution">Solution</span> From the same protein complexes, extract the <b>non-metal-binding chains</b> of heteromeric proteins as natural negatives, then clean duplicates, DNA/RNA and unknown-only sequences.</p>
-        <p style="margin:12px 0 0" class="muted">Result: <b style="color:var(--ink)">9,661</b> natural negatives — authentic proteins for realistic evaluation.</p>
-        <p class="details">These are operational negatives based on the available complex structures. Their absence of observed coordination in those structures does not prove that they cannot bind metals under other conditions.</p>
-      </div>
-    </div>
-
-    <figure class="figure narrow">
-      <a href="figures/Figure_4.png" target="_blank" rel="noopener" aria-label="Open full-size figure: ProteinMPNN redesign followed by ESMFold, structural alignment, and CHAI-1 filtering of synthetic negative proteins">
-        <img src="figures/Figure_4.png" alt="ProteinMPNN redesign followed by ESMFold, structural alignment, and CHAI-1 filtering of synthetic negative proteins" loading="lazy">
-      </a>
-      <figcaption class="figcaption">Workflow for generating the synthetic negative dataset. Click the image to view the full-size figure.</figcaption>
-    </figure>
-  </div>
+<section class="alt" id="models">
+<div class="wrap">
+<p class="kicker">Model development</p>
+<h2>Three classification tasks</h2>
+<p>ProtBERT representations (from the ProtBERT-BFD checkpoint) were used with adapter fine-tuning, semi-supervised GANBERT, and conventional classifiers. Sequence clustering was used during dataset partitioning to reduce relatedness across splits. The three tasks use different training populations and task-specific partitions.</p>
+<div class="table-scroll"><table>
+<thead><tr><th scope="col">Model</th><th scope="col">Labels and data</th><th scope="col">Approach</th></tr></thead>
+<tbody>
+<tr><td><strong>MoN</strong><br>Metalloprotein or Not</td><td>Metal-binding versus negative; includes positive, synthetic, and natural sequences.</td><td>ProtBERT adapters trained in five folds; predictions combined by majority vote.</td></tr>
+<tr><td><strong>EoS</strong><br>Enzymatic or Structural</td><td>Enzyme-annotated versus “Structural”; uses metalloprotein sequences.</td><td>GANBERT, embedding-based SVM and XGBoost, followed by an MLP ensemble using their output scores.</td></tr>
+<tr><td><strong>ESNN</strong><br>Enzymatic / Structural / Natural Negative</td><td>Three classes; uses positive sequences and natural negatives.</td><td>Class-weighted XGBoost on mean-pooled ProtBERT embeddings; layers 7, 15, 23, and 30 were compared. The reported model uses layer 15.</td></tr>
+</tbody>
+</table></div>
+<p>For EoS, the experiments compared pretrained and fine-tuned representations, CLS vectors and mean pooling, and several transformer layers. Class weights were calculated from training-label frequencies for SVM and XGBoost; the MLP ensemble used upsampling of the minority class. GANBERT additionally used unlabeled sequences in adversarial training, while its generator produced synthetic embedding vectors from random noise.</p>
+<figure><a href="figures/Figure_10.png" target="_blank" rel="noopener"><img src="figures/Figure_10.png" alt="Thesis diagram of ProtBERT representation extraction and SVM or XGBoost classification for EoS" loading="lazy"></a><figcaption>Representation extraction and classifier experiments for the EoS task. The diagram summarizes alternatives evaluated in the study.</figcaption></figure>
+</div>
 </section>
-
-<!-- ============ Models ============ -->
-<section id="models">
-  <div class="wrap">
-    <div class="section-head">
-      <div class="kicker">Part 3 · Models</div>
-      <h2>Three models, three answers to "how do we learn this?"</h2>
-      <p class="lead">Each model was shaped by the specific difficulty of its task.</p>
-    </div>
-
-    <p>The three tasks use related data but distinct training setups. MoN includes both negative sources; EoS uses only annotated metalloproteins; ESNN combines the positive set with natural negatives. The predictions are whole-protein labels rather than residue-level binding-site predictions.</p>
-    <div class="models">
-      <div class="model">
-        <span class="mtag">Binary</span>
-        <h3>MoN</h3>
-        <div class="task">Metalloprotein or not</div>
-        <p class="causal"><span class="tag problem">Problem</span> Synthetic negatives differ from positives by only a few residues, so the model risks learning trivial site-level differences and overfitting — and no near-identical pair may span train/test.</p>
-        <p class="causal"><span class="tag solution">Solution</span> Cluster positives + synthetic negatives at <b>30% identity</b> and split at the <b>cluster level</b> (9:1), then train a ProtBERT <b>adapter</b> 5-fold and combine via majority vote.</p>
-        <div class="metric">
-          <div class="row"><span>Accuracy</span><b>78.6%</b></div>
-          <div class="row"><span>F1 score</span><b>82.2%</b></div>
-        </div>
-        <p class="note">On natural (non-synthetic) test sequences.</p>
-      </div>
-
-      <div class="model">
-        <span class="mtag">Binary</span>
-        <h3>EoS</h3>
-        <div class="task">Enzymatic or structural</div>
-        <p class="causal"><span class="tag problem">Problem</span> Enzymatic vs. structural is hard and imbalanced, with limited labels — yet we hold ~21k <b>redundant (unlabeled)</b> metalloprotein sequences that could still help.</p>
-        <p class="causal"><span class="tag solution">Solution</span> Compare three strategies and combine the best: <b>GANBERT</b> (feeds redundant sequences to the generator as unlabeled noise), <b>embedding + SVM/XGBoost</b>, and an <b>MLP ensemble</b> — with class weighting for imbalance.</p>
-        <div class="metric">
-          <div class="row"><span>Accuracy (ensemble)</span><b>74.1%</b></div>
-          <div class="row"><span>F1 score (ensemble)</span><b>72.9%</b></div>
-        </div>
-        <p class="note">Ensemble beats the best single model (embedding + XGBoost, 73.2% / 72.8%).</p>
-      </div>
-
-      <div class="model">
-        <span class="mtag">Three-class</span>
-        <h3>ESNN</h3>
-        <div class="task">Enzymatic / Structural / Natural-negative</div>
-        <p class="causal"><span class="tag problem">Problem</span> One model should classify all three categories at once, but adding the synthetic negatives would flood it with non-metal samples and skew the classes.</p>
-        <p class="causal"><span class="tag solution">Solution</span> Train on <b>positive + natural negative only</b>; mean-pool ProtBERT embeddings from layers <b>7 / 15 / 23 / 30</b> and fit a class-weighted <b>XGBoost</b>.</p>
-        <div class="metric">
-          <div class="row"><span>3-class accuracy / F1</span><b>68.9% / 69.2%</b></div>
-          <div class="row"><span>Metal-binding subtask</span><b>86.2% / 90.0%</b></div>
-        </div>
-        <p class="note">On the binary "metal-binding vs not" subtask, ESNN clearly outperforms MoN.</p>
-      </div>
-    </div>
-
-    <div class="panel" style="margin-top:24px">
-      <h3>From sequence to a trained classifier</h3>
-      <p class="muted">For the embedding models, amino-acid sequences are tokenized for ProtBERT. Hidden representations from a selected layer are reduced to one vector per protein using mean pooling or the CLS token. EoS compares both pooling methods and both pretrained and fine-tuned representations; ESNN compares mean-pooled features from layers 7, 15, 23 and 30.</p>
-      <p class="muted">EoS and ESNN use cluster-based training/validation/test partitions at an 8:1:1 ratio. Hyperparameters are compared on validation data, with class weights derived from training counts. Held-out test data are used for final evaluation. For the EoS ensemble, probabilities from GANBERT, SVM and XGBoost become inputs to a small MLP.</p>
-      <p class="muted">The code sample below shows a compact ESNN workflow: predefined sequence splits → ProtBERT embeddings → class-weighted XGBoost → predictions and evaluation tables.</p>
-    </div>
-
-    <figure class="figure">
-      <a href="figures/Figure_10.png" target="_blank" rel="noopener" aria-label="Open full-size figure: ProtBERT embedding extraction and SVM or XGBoost model comparison for enzymatic versus structural classification">
-        <img src="figures/Figure_10.png" alt="ProtBERT embedding extraction and SVM or XGBoost model comparison for enzymatic versus structural classification" loading="lazy">
-      </a>
-      <figcaption class="figcaption">Embedding extraction and machine-learning workflow for the EoS model. Click the image to view the full-size figure.</figcaption>
-    </figure>
-  </div>
+<section id="results">
+<div class="wrap">
+<p class="kicker">Evaluation</p>
+<h2>Reported internal test results</h2>
+<p>The table summarizes the saved evaluations. F1 definitions and evaluation populations are specified because the tasks are not directly interchangeable.</p>
+<div class="table-scroll"><table>
+<thead><tr><th scope="col">Evaluation</th><th scope="col">Test sequences</th><th scope="col">Accuracy</th><th scope="col">F1</th><th scope="col">F1 definition</th></tr></thead>
+<tbody>
+<tr><td>MoN · all negative sources</td><td class="number">3,768</td><td class="number">76.59%</td><td class="number">75.90%</td><td>Metal-positive binary F1</td></tr>
+<tr><td>MoN · synthetic negatives excluded</td><td class="number">2,819</td><td class="number">78.61%</td><td class="number">82.17%</td><td>Metal-positive binary F1</td></tr>
+<tr><td>EoS · reported MLP ensemble</td><td class="number">1,835</td><td class="number">74.11%</td><td class="number">72.93%</td><td>Enzyme-positive binary F1</td></tr>
+<tr><td>ESNN · three-class task</td><td class="number">2,801</td><td class="number">68.87%</td><td class="number">69.20%</td><td>Macro F1 across three classes</td></tr>
+<tr><td>ESNN · metal / non-metal grouping</td><td class="number">2,801</td><td class="number">86.15%</td><td class="number">90.01%</td><td>Metal-positive binary F1</td></tr>
+</tbody>
+</table></div>
+<p class="note">ESNN's binary result combines the enzymatic and “Structural” classes into the metal-binding class without retraining. It uses the ESNN test partition, which differs from MoN's. The higher score therefore does not isolate the effect of model architecture, training data, or the choice of negative examples.</p>
+<h3>Interpretation</h3>
+<p>The experiments support the use of protein language model representations for these annotation tasks, with remaining difficulty in distinguishing the two metalloprotein classes. In ESNN, recall for the “Structural” class was 56.6%, compared with 70.2% for the enzyme-annotated class and 83.7% for natural negatives. MoN's results also depended on whether synthetic negatives were included in evaluation.</p>
+<p>The reported EoS ensemble has a modestly higher test accuracy than the best reported single XGBoost model (74.1% versus 73.2%). However, its quoted configuration comes from a test-ranked experiment summary. Some model comparisons consulted test performance, so these results are exploratory internal evaluations rather than an independently validated final benchmark.</p>
+<details>
+<summary>Per-metal analysis from the thesis</summary>
+<figure><a href="figures/Figure_14.png" target="_blank" rel="noopener"><img src="figures/Figure_14.png" alt="Original thesis comparison of ESNN and MoN per-metal positive-sequence classification rates" loading="lazy"></a><figcaption>The bars show differences in observed positive-sequence classification rates, in percentage points. The models were evaluated on different sequence subsets and sample counts; this is a descriptive comparison, not a paired estimate of improvement. Rare-ion estimates may depend on very few sequences.</figcaption></figure>
+</details>
+</div>
 </section>
-
-<!-- ============ Results ============ -->
-<section class="alt" id="results">
-  <div class="wrap">
-    <div class="section-head">
-      <div class="kicker">Results</div>
-      <h2>Performance at a glance</h2>
-    </div>
-
-    <div class="table-scroll">
-    <table class="results">
-      <thead>
-        <tr><th>Model</th><th>Task</th><th>Accuracy</th><th>F1 score</th><th>Note</th></tr>
-      </thead>
-      <tbody>
-        <tr><td><b>MoN</b></td><td>Metalloprotein vs. not</td><td><b>78.6%</b></td><td><b>82.2%</b></td><td class="muted">natural sequences</td></tr>
-        <tr><td><b>EoS</b> (ensemble)</td><td>Enzymatic vs. structural</td><td><b>74.1%</b></td><td><b>72.9%</b></td><td class="muted">MLP over GANBERT + SVM + XGBoost</td></tr>
-        <tr><td><b>ESNN</b></td><td>3-class (Enz / Str / Non-metal)</td><td><b>68.9%</b></td><td><b>69.2%</b></td><td class="muted">embedding + XGBoost</td></tr>
-        <tr><td><b>ESNN</b></td><td>binary metal-binding subtask</td><td><b>86.2%</b></td><td><b>90.0%</b></td><td class="muted">best overall on natural data</td></tr>
-      </tbody>
-    </table>
-    </div>
-
-    <h3 style="margin-top:32px">What we learned</h3>
-    <div class="cols" style="margin-top:12px">
-      <div class="panel">
-        <ul>
-          <li><b>ESNN &gt; MoN</b> — the three-class model beats the dedicated binary model on natural sequences, with gains of <b>11.5, 14.6 and 23.1 percentage points</b> for Mg, Ca and Na on positive test sequences, respectively.</li>
-          <li><b>Embedding + ML &gt; GANBERT</b> — under the same split, embedding-based SVM/XGBoost consistently edged out the semi-supervised deep model.</li>
-        </ul>
-      </div>
-      <div class="panel">
-        <ul>
-          <li><b>Cofactor sites predict better</b> — proteins with cofactor-coordinated metals (e.g. Fe in SF4 clusters) reached 94–96% accuracy; single-site proteins were hardest.</li>
-          <li><b>Synthetic negatives were too subtle</b> — differing only at the binding site, the model struggled to separate them from positives, while natural negatives were easy.</li>
-        </ul>
-      </div>
-    </div>
-
-    <figure class="figure">
-      <a href="figures/Figure_14.png" target="_blank" rel="noopener" aria-label="Open full-size figure: Per-metal sequence-level accuracy difference in percentage points between ESNN and MoN, with sample counts">
-        <img src="figures/Figure_14.png" alt="Per-metal sequence-level accuracy difference in percentage points between ESNN and MoN, with sample counts" loading="lazy">
-      </a>
-      <figcaption class="figcaption">Per-metal accuracy improvement of ESNN over MoN. Click the image to view the full-size figure.</figcaption>
-    </figure>
-  </div>
+<section class="alt" id="limitations">
+<div class="wrap">
+<p class="kicker">Scope of the evidence</p>
+<h2>Limitations and further work</h2>
+<ul>
+<li><strong>Label uncertainty.</strong> Coordination annotations are incomplete. The “Structural” category and natural negatives depend on missing annotations, while synthetic negatives depend on predicted structures and contact checks.</li>
+<li><strong>Structural sampling.</strong> The data are drawn from deposited PDB structures, without a systematic experimental-method or resolution filter. A metal present in a structure need not have a physiological role.</li>
+<li><strong>Uneven coverage.</strong> Although 44 element categories occur in the site annotations, Zn, Mg, Ca, Fe, and Na account for approximately 85% of sites. Representation of a category does not establish reliable prediction for rare ions.</li>
+<li><strong>Evaluation design.</strong> Cluster-based partitioning reduces some sequence redundancy but does not by itself establish complete homology isolation. Different task partitions and test-set consultation limit comparative conclusions.</li>
+</ul>
+<p>Further evaluation would benefit from a fixed external test set, model selection restricted to training and validation data, and experimentally supported labels for non-binding and non-enzymatic proteins. Direct measurements of redesigned proteins would also test whether the computational screening criteria correspond to changes in metal affinity.</p>
+</div>
 </section>
-
-<!-- ============ Code sample ============ -->
-<section>
-  <div class="wrap">
-    <div class="section-head">
-      <div class="kicker">Implementation</div>
-      <h2>Explore the machine learning code</h2>
-      <p class="lead">Two selected scripts connect protein sequences to three-class predictions.</p>
-    </div>
-    <div class="cols">
-      <div class="panel">
-        <h3>1. Extract ProtBERT embeddings</h3>
-        <p class="muted">Read the predefined training, validation and test splits, assign labels from sequence identifiers, select a transformer layer and pooling method, and export fixed-size feature vectors to CSV.</p>
-      </div>
-      <div class="panel">
-        <h3>2. Train class-weighted XGBoost</h3>
-        <p class="muted">Compute inverse-frequency weights on the training split, search model parameters, use validation data for early stopping and model selection, and export held-out test predictions and metrics.</p>
-      </div>
-    </div>
-    <div class="actions"><a class="btn" href="Code_Sample_Jingkai_LAN.html">Open Code Sample</a></div>
-  </div>
+<section id="implementation">
+<div class="wrap">
+<p class="kicker">Code and documentation</p>
+<h2>Implementation</h2>
+<p>The interactive code sample presents two selected scripts from the ESNN workflow: extraction of fixed-size ProtBERT embeddings from predefined sequence splits, followed by class-weighted XGBoost training and evaluation. It includes the input format, execution order, and exported predictions and metrics.</p>
+<div class="actions"><a class="btn" href="Code_Sample_Jingkai_LAN.html">Open Code Sample</a><a class="btn secondary" href="https://github.com/ibmm-unibe-ch/metal_binding_predictions" target="_blank" rel="noopener">Project repository</a></div>
+<p class="sources technical">Methods and results are documented in the <a href="../../Paper/Jingkai_thesis.pdf">thesis</a>. This description also uses the dataset and evaluation scripts, retained result tables, and research records (<code>Note.md</code>, <code>Record.md</code>, and <code>Dairy.md</code>) to distinguish exploratory work from the final datasets.</p>
+<p class="sources">The worked example can be checked in the <a href="https://files.rcsb.org/download/13pk.pdb" target="_blank" rel="noopener">13PK coordinate file</a>. The meaning of the coordination record is described in the <a href="https://www.wwpdb.org/documentation/file-format-content/format33/remarks2.html#REMARK%20620" target="_blank" rel="noopener">wwPDB format documentation</a>.</p>
+</div>
 </section>
-
-<!-- ============ Tech ============ -->
-<section>
-  <div class="wrap">
-    <div class="section-head">
-      <div class="kicker">Tooling</div>
-      <h2>Tools &amp; technologies</h2>
-    </div>
-    <div class="tools">
-      <span class="tool"><b>ProtBERT</b> backbone</span>
-      <span class="tool"><b>GANBERT</b> semi-supervision</span>
-      <span class="tool"><b>SVM / XGBoost</b> classifiers</span>
-      <span class="tool"><b>MMseqs2</b> clustering</span>
-      <span class="tool"><b>ProDy</b> site extraction</span>
-      <span class="tool"><b>ProteinMPNN</b> redesign</span>
-      <span class="tool"><b>ESMFold</b> structure</span>
-      <span class="tool"><b>TMalign</b> alignment</span>
-      <span class="tool"><b>CHAI-1</b> validation</span>
-      <span class="tool"><b>metalHawk</b> geometry</span>
-      <span class="tool"><b>BRENDA / PDB</b> enzyme annotation</span>
-    </div>
-  </div>
-</section>
-
-<footer>
-  <div class="wrap">
-    <p>
-      Data, code and models — <a href="https://github.com/ibmm-unibe-ch/metal_binding_predictions">github.com/ibmm-unibe-ch/metal_binding_predictions</a>
-    </p>
-    <p style="opacity:.7">
-      LAN Jingkai · Advancing Metal-Binding Protein Predictions with Deep Learning · Master's thesis, University of Bern, 2025.
-
-    </p>
-  </div>
-</footer>
-
+</main>
+<footer><div class="wrap"><p>Jingkai LAN · Master's thesis project · University of Bern</p><p><a href="../../../index.html">Return to projects</a></p></div></footer>
 </body>
 </html>
